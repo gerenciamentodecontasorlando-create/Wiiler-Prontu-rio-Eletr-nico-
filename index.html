@@ -3,689 +3,557 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Willi - Prontuário Eletrônico</title>
-    
-    <!-- Font Awesome local -->
+    <title>Sistema Clínico</title>
     <style>
-        /* Font Awesome Icons - Versão mínima */
-        @font-face {
-            font-family: 'Font Awesome 6 Free';
-            font-style: normal;
-            font-weight: 900;
-            font-display: block;
-            src: url("data:application/font-woff2;charset=utf-8;base64,d09GMgABAAAAAA") format('woff2');
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
+        body { background: #f5f7fa; color: #333; padding: 20px; line-height: 1.6; }
+        header { background: linear-gradient(135deg, #1a6dcc, #0d4d9c); color: white; padding: 25px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 6px 15px rgba(0, 82, 204, 0.2); text-align: center; }
+        h1 { font-size: 2rem; margin-bottom: 8px; }
+        .subtitle { opacity: 0.9; font-size: 1rem; }
+        .tabs { display: flex; background: white; border-radius: 10px; overflow: hidden; margin-bottom: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); flex-wrap: wrap; }
+        .tab-button { flex: 1; padding: 18px; background: none; border: none; cursor: pointer; font-weight: 600; color: #666; transition: all 0.3s; text-align: center; min-width: 140px; }
+        .tab-button.active { color: #1a6dcc; border-bottom: 3px solid #1a6dcc; background-color: #f0f7ff; }
+        .tab-button:hover:not(.active) { background-color: #f9f9f9; }
+        .tab-content { display: none; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-top: 5px; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .config-panel { background: #f0f7ff; border-left: 4px solid #1a6dcc; padding: 20px; border-radius: 8px; margin-bottom: 25px; }
+        .config-panel h3 { color: #0d4d9c; margin-bottom: 15px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #444; }
+        input, textarea, select {
+            width: 100%; padding: 14px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; transition: border 0.3s;
+            background-color: #fcfcfc;
         }
-        .fa, .fas, .far, .fal, .fab {
-            font-family: 'Font Awesome 6 Free';
-            font-weight: 900;
-        }
-        .fa-search:before { content: "🔍"; }
-        .fa-plus:before { content: "+"; }
-        .fa-save:before { content: "💾"; }
-        .fa-cog:before { content: "⚙"; }
-        .fa-file-pdf:before { content: "📄"; }
-        .fa-print:before { content: "🖨"; }
-        .fa-download:before { content: "📥"; }
-        .fa-calendar-day:before { content: "📅"; }
-        .fa-calendar-check:before { content: "✓"; }
-        .fa-chevron-left:before { content: "←"; }
-        .fa-chevron-right:before { content: "→"; }
-        .fa-calendar-alt:before { content: "📅"; }
-        .fa-calendar-week:before { content: "📅"; }
-        .fa-birthday-cake:before { content: "🎂"; }
-        .fa-venus:before { content: "♀"; }
-        .fa-id-card:before { content: "🪪"; }
-        .fa-phone:before { content: "📞"; }
-        .fa-envelope:before { content: "✉"; }
-        .fa-info-circle:before { content: "ℹ"; }
-        .fa-lightbulb:before { content: "💡"; }
-        .fa-check-circle:before { content: "✓"; }
-        .fa-exclamation-circle:before { content: "⚠"; }
-        .fa-times:before { content: "×"; }
-        .fa-trash:before { content: "🗑"; }
-        .fa-edit:before { content: "✏"; }
-        .fa-file-medical:before { content: "📋"; }
-        .fa-database:before { content: "💾"; }
-        .fa-exclamation-triangle:before { content: "⚠"; }
-        .fa-brain:before { content: "🧠"; }
-        .fa-upload:before { content: "📤"; }
-        .fa-trash-alt:before { content: "🗑"; }
-        .fa-check:before { content: "✓"; }
-        .fa-wifi:before { content: "📶"; }
-        .fa-wifi-slash:before { content: "📵"; }
-    </style>
-
-    <!-- Fontes Google substituídas por fontes do sistema -->
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-            color: #333;
-            background-color: #ffffff;
-            line-height: 1.6;
-            margin: 0;
-            padding: 0;
-        }
-        
-        h1, h2, h3, h4, h5, h6 {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-            font-weight: 600;
-            margin-bottom: 0.75rem;
-        }
-    </style>
-
-    <!-- CSS PRINCIPAL DO SISTEMA -->
-    <style>
-        /* ========== VARIÁVEIS ========== */
-        :root {
-            --primary-color: #1e88e5;
-            --primary-dark: #1565c0;
-            --primary-light: #64b5f6;
-            --secondary-color: #f5f5f5;
-            --text-color: #333;
-            --text-light: #666;
-            --border-color: #e0e0e0;
-            --success-color: #43a047;
-            --warning-color: #ff9800;
-            --danger-color: #e53935;
-            --white: #ffffff;
-            --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            --border-radius: 8px;
-        }
-
-        /* ========== LAYOUT ========== */
-        .app-container {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-
-        /* Cabeçalho */
-        .app-header {
-            background-color: var(--white);
-            border-bottom: 1px solid var(--border-color);
-            padding: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: var(--shadow);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .logo-icon {
-            font-size: 1.5rem;
-        }
-
-        .logo-text {
-            font-weight: 700;
-            font-size: 1.2rem;
-            color: var(--primary-color);
-        }
-
-        .professional-info {
-            text-align: right;
-            font-size: 0.9rem;
-            color: var(--text-light);
-        }
-
-        .professional-name {
-            font-weight: 600;
-            color: var(--text-color);
-        }
-
-        /* Navegação */
-        .app-navigation {
-            background-color: var(--white);
-            border-bottom: 1px solid var(--border-color);
-            padding: 0 1rem;
-            display: flex;
-            overflow-x: auto;
-            white-space: nowrap;
-        }
-
-        .nav-tab {
-            padding: 0.75rem 1rem;
-            background: none;
-            border: none;
-            border-bottom: 3px solid transparent;
-            font-weight: 500;
-            color: var(--text-light);
-            cursor: pointer;
-        }
-
-        .nav-tab:hover {
-            color: var(--primary-color);
-        }
-
-        .nav-tab.active {
-            color: var(--primary-color);
-            border-bottom-color: var(--primary-color);
-        }
-
-        /* Conteúdo */
-        .app-content {
-            flex: 1;
-            padding: 1rem;
-            background-color: var(--white);
-        }
-
-        .content-section {
-            display: none;
-        }
-
-        .content-section.active {
-            display: block;
-        }
-
-        /* Componentes */
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-
+        input:focus, textarea:focus, select:focus { border-color: #1a6dcc; outline: none; background-color: #fff; }
         .btn {
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: var(--border-radius);
-            font-weight: 500;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
+            background: linear-gradient(to right, #1a6dcc, #0d4d9c); color: white; border: none; padding: 15px 30px;
+            border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; display: inline-block; text-decoration: none;
+            box-shadow: 0 4px 10px rgba(26, 109, 204, 0.3);
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(26, 109, 204, 0.4); }
+        .btn:disabled { background: #cccccc; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-secondary { background: linear-gradient(to right, #6c757d, #495057); box-shadow: 0 4px 10px rgba(108, 117, 125, 0.3); }
+        .btn-secondary:hover { box-shadow: 0 6px 15px rgba(108, 117, 125, 0.4); }
+
+        .document { border: 2px solid #ccc; padding: 30px; border-radius: 10px; background: #fefefe; max-width: 800px; margin: 20px auto; }
+        .doc-header { text-align: center; border-bottom: 2px solid #1a6dcc; padding-bottom: 20px; margin-bottom: 25px; }
+        .signature-area { margin-top: 80px; padding-top: 20px; border-top: 1px dashed #666; text-align: center; }
+
+        .calendar-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
+        .calendar-day { border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; background: #fff; min-height: 140px; }
+        .day-header { font-weight: bold; color: #1a6dcc; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 10px; }
+        .appointment { background: #e8f4ff; border-left: 4px solid #1a6dcc; padding: 10px; margin-top: 8px; border-radius: 4px; font-size: 0.9rem; }
+        .appointment.urgent { background: #ffe8e8; border-left-color: #dc3545; }
+        .hidden { display: none; }
+        .system-alert { background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; border: 1px solid #c3e6cb; margin: 20px 0; }
+        .footer-note { text-align: center; margin-top: 40px; color: #666; font-size: 0.9rem; }
+
+        /* ===================== PRINT FIX (IMPRIME SÓ O DOCUMENTO) ===================== */
+        @media print {
+            body { padding: 0; background: #fff; }
+            header, .tabs, .tab-content:not(.print-area), .footer-note { display: none !important; }
+            .print-area { display: block !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
+            .document { border: none !important; margin: 0 !important; max-width: none !important; }
+            button { display: none !important; }
+            @page { size: A4; margin: 12mm; }
         }
 
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: var(--white);
-        }
-
-        .btn-secondary {
-            background-color: var(--secondary-color);
-            color: var(--text-color);
-        }
-
-        .btn-success {
-            background-color: var(--success-color);
-            color: var(--white);
-        }
-
-        .btn-danger {
-            background-color: var(--danger-color);
-            color: var(--white);
-        }
-
-        .card {
-            background-color: var(--white);
-            border-radius: var(--border-radius);
-            border: 1px solid var(--border-color);
-            padding: 1rem;
-            margin-bottom: 1rem;
-            box-shadow: var(--shadow);
-        }
-
-        .card-title {
-            font-size: 1.1rem;
-            margin-bottom: 0.5rem;
-            color: var(--primary-color);
-        }
-
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 0.25rem;
-            font-weight: 500;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 0.5rem;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-        }
-
-        .alert {
-            padding: 0.75rem;
-            border-radius: var(--border-radius);
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .alert-info {
-            background-color: #e3f2fd;
-            border-left: 4px solid var(--primary-color);
-        }
-
-        .alert-success {
-            background-color: #e8f5e9;
-            border-left: 4px solid var(--success-color);
-        }
-
-        /* Prontuário */
-        .patient-summary {
-            background-color: #f9f9f9;
-            padding: 1rem;
-            border-radius: var(--border-radius);
-            margin-bottom: 1rem;
-        }
-
-        .patient-name {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .patient-demographics {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .demographic-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        /* Documentos */
-        .document-container {
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
-            padding: 1.5rem;
-            margin: 0 auto;
-            background: var(--white);
-        }
-
-        .document-header {
-            text-align: center;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid var(--primary-color);
-        }
-
-        .document-title {
-            color: var(--primary-color);
-            font-size: 1.5rem;
-            margin-bottom: 0.25rem;
-        }
-
-        .document-subtitle {
-            color: var(--text-light);
-            font-size: 0.9rem;
-        }
-
-        /* Responsivo */
         @media (max-width: 768px) {
-            .app-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 0.5rem;
-            }
-            
-            .professional-info {
-                text-align: left;
-            }
-            
-            .grid-2, .grid-3 {
-                grid-template-columns: 1fr !important;
-            }
+            .calendar-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+            .tab-button { min-width: 120px; padding: 15px 10px; }
         }
-
-        .grid-2 {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1rem;
-        }
-
-        .grid-3 {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
+        @media (max-width: 480px) {
+            body { padding: 15px; }
+            header { padding: 20px 15px; }
+            .tab-button { min-width: 100%; }
+            .document { padding: 20px 15px; }
         }
     </style>
 </head>
 <body>
-    <!-- INTERFACE SIMPLIFICADA -->
-    <div class="app-container">
-        <header class="app-header">
-            <div class="logo-container">
-                <div class="logo-icon">🧠</div>
-                <div class="logo-text">Willi PEM</div>
-            </div>
-            <div class="professional-info">
-                <div class="professional-name">Dr. João Silva</div>
-                <div>Neurologista • CRM: 12345/SP</div>
-            </div>
-        </header>
+    <header>
+        <h1>🧠 Sistema Clínico</h1>
+        <p class="subtitle">Prontuário, Agenda e Documentos | Dados salvos localmente</p>
+    </header>
 
-        <nav class="app-navigation">
-            <button class="nav-tab active" data-target="dashboard">Prontuário</button>
-            <button class="nav-tab" data-target="agenda">Agenda</button>
-            <button class="nav-tab" data-target="prescription">Receituário</button>
-            <button class="nav-tab" data-target="settings">Configurações</button>
-        </nav>
-
-        <main class="app-content">
-            <!-- PRONTUÁRIO -->
-            <section id="dashboard" class="content-section active">
-                <div class="section-header">
-                    <h2>Prontuário do Paciente</h2>
-                    <button class="btn btn-primary" id="new-consultation">
-                        + Nova Consulta
-                    </button>
-                </div>
-
-                <div class="patient-summary">
-                    <h1 class="patient-name">Maria da Silva Santos</h1>
-                    <div class="patient-demographics">
-                        <div class="demographic-item">🎂 45 anos</div>
-                        <div class="demographic-item">♀ Feminino</div>
-                        <div class="demographic-item">📞 (11) 99999-8888</div>
-                    </div>
-                </div>
-
-                <div class="grid-2">
-                    <div class="card">
-                        <h3 class="card-title">Dados Cadastrais</h3>
-                        <div class="form-group">
-                            <div class="form-label">Endereço</div>
-                            <div>Rua das Flores, 123 - Centro, São Paulo - SP</div>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <h3 class="card-title">Histórico Clínico</h3>
-                        <div class="form-group">
-                            <div class="form-label">Doenças Prévias</div>
-                            <div>Hipertensão arterial, Enxaqueca crônica</div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- AGENDA -->
-            <section id="agenda" class="content-section">
-                <div class="section-header">
-                    <h2>Agenda Clínica</h2>
-                    <button class="btn btn-primary" id="new-appointment">
-                        + Novo Agendamento
-                    </button>
-                </div>
-
-                <div class="alert alert-info">
-                    ℹ Clique em um agendamento para ver detalhes
-                </div>
-
-                <div class="card">
-                    <h3 class="card-title">Agenda de Hoje</h3>
-                    <div id="today-appointments">
-                        <div class="appointment-item" style="background: #e3f2fd; padding: 0.5rem; margin: 0.25rem 0; border-radius: 4px; border-left: 3px solid var(--primary-color);">
-                            <div><strong>09:00</strong> - Maria Santos (Retorno)</div>
-                        </div>
-                        <div class="appointment-item" style="background: #ffebee; padding: 0.5rem; margin: 0.25rem 0; border-radius: 4px; border-left: 3px solid var(--danger-color);">
-                            <div><strong>14:00</strong> - Juliana Costa (URGÊNCIA)</div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- RECEITUÁRIO -->
-            <section id="prescription" class="content-section">
-                <div class="section-header">
-                    <h2>Receituário Médico</h2>
-                    <div>
-                        <button class="btn btn-secondary" onclick="window.print()">
-                            🖨 Imprimir
-                        </button>
-                        <button class="btn btn-primary" onclick="saveAsPDF()">
-                            📄 Salvar como PDF
-                        </button>
-                    </div>
-                </div>
-
-                <div class="document-container">
-                    <div class="document-header">
-                        <h2 class="document-title">Receituário Médico</h2>
-                        <div class="document-subtitle">Dr. João Silva • Neurologista • CRM: 12345/SP</div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Paciente</label>
-                        <input type="text" class="form-control" value="Maria da Silva Santos">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Prescrição</label>
-                        <textarea class="form-control" style="height: 200px;">
-1. Paracetamol 500mg
-   Tomar 1 comprimido de 6/6 horas em caso de dor.
-
-2. Ibuprofeno 400mg
-   Tomar 1 comprimido de 8/8 horas após as refeições.
-
-3. Propranolol 40mg
-   Tomar 1 comprimido ao dia, pela manhã.
-                        </textarea>
-                    </div>
-                    
-                    <div style="text-align: center; margin: 2rem 0; padding-top: 1rem; border-top: 1px solid #000;">
-                        <div>Assinatura do Médico</div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- CONFIGURAÇÕES -->
-            <section id="settings" class="content-section">
-                <div class="section-header">
-                    <h2>⚙ Configurações</h2>
-                    <button class="btn btn-primary" id="save-settings">
-                        💾 Salvar
-                    </button>
-                </div>
-
-                <div class="card">
-                    <h3 class="card-title">Dados Profissionais</h3>
-                    <div class="grid-2">
-                        <div class="form-group">
-                            <label class="form-label">Nome Completo</label>
-                            <input type="text" class="form-control" id="professional-name" value="Dr. João Silva">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Especialidade</label>
-                            <input type="text" class="form-control" id="professional-specialty" value="Neurologista">
-                        </div>
-                    </div>
-                    <div class="grid-2">
-                        <div class="form-group">
-                            <label class="form-label">Número do Conselho</label>
-                            <input type="text" class="form-control" id="professional-registry" value="12345/SP">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Telefone</label>
-                            <input type="tel" class="form-control" id="professional-phone" value="(11) 3333-4444">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="alert alert-success" id="settings-saved" style="display: none;">
-                    ✓ Configurações salvas com sucesso!
-                </div>
-            </section>
-        </main>
-
-        <footer style="padding: 1rem; text-align: center; background: #f5f5f5; border-top: 1px solid var(--border-color);">
-            <div>Willi Prontuário Eletrônico • Versão Offline</div>
-        </footer>
+    <div class="tabs">
+        <button class="tab-button active" onclick="openTab('config', this)">⚙️ Configurações</button>
+        <button class="tab-button" onclick="openTab('agenda', this)">📅 Agenda</button>
+        <button class="tab-button" onclick="openTab('prontuario', this)">📋 Prontuário</button>
+        <button class="tab-button" onclick="openTab('receita', this)">📄 Receituário</button>
+        <button class="tab-button" onclick="openTab('atestado', this)">🖋️ Atestado</button>
     </div>
 
-    <!-- JAVASCRIPT SIMPLIFICADO -->
-    <script>
-        // ========== CONFIGURAÇÕES ==========
-        class ProfessionalSettings {
-            constructor() {
-                this.storageKey = 'willi_settings';
-                this.init();
-            }
+    <!-- CONFIGURAÇÕES -->
+    <div id="config" class="tab-content active">
+        <div class="config-panel">
+            <h3>Dados do Profissional</h3>
+            <p>Preencha uma vez. Os dados aparecerão automaticamente nos documentos.</p>
+        </div>
+        <form id="formConfig">
+            <div class="form-group">
+                <label for="profNome">Nome Completo *</label>
+                <input type="text" id="profNome" placeholder="Ex: Dr. João Silva" required>
+            </div>
+            <div class="form-group">
+                <label for="profEspecialidade">Especialidade / CRM *</label>
+                <input type="text" id="profEspecialidade" placeholder="Ex: Cirurgião Buco Maxilo Facial • CRO/UF 00000" required>
+            </div>
+            <div class="form-group">
+                <label for="profEndereco">Endereço da Clínica</label>
+                <textarea id="profEndereco" rows="3" placeholder="Rua, Número - Bairro, Cidade - Estado, CEP"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="profTelefone">Telefone de Contato</label>
+                <input type="text" id="profTelefone" placeholder="(11) 99999-8888">
+            </div>
+            <button type="submit" class="btn">💾 Salvar Dados Profissionais</button>
+            <button type="button" class="btn btn-secondary" onclick="localStorage.clear(); location.reload();">🗑️ Limpar Todos os Dados Salvos</button>
+        </form>
+        <div id="configAlert" class="system-alert hidden">✅ Configurações salvas com sucesso! Os dados serão usados nos documentos.</div>
+    </div>
 
-            init() {
-                this.loadSettings();
-                this.setupEventListeners();
-            }
+    <!-- AGENDA -->
+    <div id="agenda" class="tab-content">
+        <h2>Agenda Clínica</h2>
+        <p style="margin-bottom:20px;">Visualize e gerencie os compromissos. <strong>Para adicionar um novo compromisso, use o formulário do Prontuário.</strong></p>
 
-            loadSettings() {
-                try {
-                    const saved = localStorage.getItem(this.storageKey);
-                    if (saved) {
-                        const settings = JSON.parse(saved);
-                        document.getElementById('professional-name').value = settings.name || 'Dr. João Silva';
-                        document.getElementById('professional-specialty').value = settings.specialty || 'Neurologista';
-                        document.getElementById('professional-registry').value = settings.registry || '12345/SP';
-                        document.getElementById('professional-phone').value = settings.phone || '(11) 3333-4444';
-                        
-                        // Atualizar cabeçalho
-                        document.querySelector('.professional-name').textContent = settings.name || 'Dr. João Silva';
-                        document.querySelector('.professional-info div:nth-child(2)').textContent = 
-                            `${settings.specialty || 'Neurologista'} • ${settings.registry || '12345/SP'}`;
-                    }
-                } catch (error) {
-                    console.log('Usando configurações padrão');
-                }
-            }
+        <div style="margin-bottom:25px; display:flex; gap:15px; flex-wrap:wrap;">
+            <button class="btn btn-secondary" onclick="renderCalendar('prev')">Semana Anterior</button>
+            <button class="btn" onclick="renderCalendar('today')">Hoje</button>
+            <button class="btn" onclick="renderCalendar('next')">Próxima Semana</button>
 
-            saveSettings() {
-                try {
-                    const settings = {
-                        name: document.getElementById('professional-name').value,
-                        specialty: document.getElementById('professional-specialty').value,
-                        registry: document.getElementById('professional-registry').value,
-                        phone: document.getElementById('professional-phone').value
-                    };
+            <select id="filterDoctor" onchange="renderCalendar()" style="padding:12px; border-radius:8px; border:2px solid #ddd;">
+                <option value="">Filtrar por Paciente</option>
+            </select>
+        </div>
 
-                    localStorage.setItem(this.storageKey, JSON.stringify(settings));
-                    
-                    // Atualizar cabeçalho
-                    document.querySelector('.professional-name').textContent = settings.name;
-                    document.querySelector('.professional-info div:nth-child(2)').textContent = 
-                        `${settings.specialty} • ${settings.registry}`;
-                    
-                    // Mostrar feedback
-                    const alert = document.getElementById('settings-saved');
-                    alert.style.display = 'flex';
-                    setTimeout(() => alert.style.display = 'none', 3000);
-                    
-                    showNotification('Configurações salvas!');
-                    
-                    return true;
-                } catch (error) {
-                    showNotification('Erro ao salvar', 'error');
-                    return false;
-                }
-            }
+        <div id="calendarContainer" class="calendar-grid">
+            <p>Carregando agenda...</p>
+        </div>
+    </div>
 
-            setupEventListeners() {
-                document.getElementById('save-settings').addEventListener('click', () => this.saveSettings());
-            }
-        }
+    <!-- PRONTUÁRIO (MELHORADO) -->
+    <div id="prontuario" class="tab-content">
+        <h2>Prontuário do Paciente & Agendamento</h2>
+        <p>Agora com campos mínimos para registro clínico mais completo (uso interno e respaldo).</p>
 
-        // ========== FUNÇÕES GERAIS ==========
-        function showNotification(message, type = 'info') {
-            // Criar notificação simples
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 1rem;
-                background: ${type === 'error' ? '#f44336' : '#4CAF50'};
-                color: white;
-                border-radius: 4px;
-                z-index: 1000;
-                animation: slideIn 0.3s ease;
-            `;
-            
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.style.animation = 'slideOut 0.3s ease';
-                setTimeout(() => notification.remove(), 300);
-            }, 3000);
-            
-            // Adicionar animações CSS
-            if (!document.querySelector('#notification-styles')) {
-                const style = document.createElement('style');
-                style.id = 'notification-styles';
-                style.textContent = `
-                    @keyframes slideIn {
-                        from { transform: translateX(100%); opacity: 0; }
-                        to { transform: translateX(0); opacity: 1; }
-                    }
-                    @keyframes slideOut {
-                        from { transform: translateX(0); opacity: 1; }
-                        to { transform: translateX(100%); opacity: 0; }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-        }
+        <form id="formProntuario">
+            <div class="form-group">
+                <label for="pacienteNome">Nome do Paciente *</label>
+                <input type="text" id="pacienteNome" required>
+            </div>
+            <div class="form-group">
+                <label for="pacienteDataNasc">Data de Nascimento</label>
+                <input type="date" id="pacienteDataNasc">
+            </div>
 
-        function saveAsPDF() {
-            showNotification('Gerando PDF... (em desenvolvimento)');
-            // Em uma versão completa, aqui iria o código do jsPDF
-            // Por enquanto, apenas habilita a impressão
-            window.print();
-        }
+            <div class="form-group">
+                <label for="pacienteQueixa">Queixa Principal / Motivo da Consulta *</label>
+                <textarea id="pacienteQueixa" rows="3" required></textarea>
+            </div>
 
-        // ========== NAVEGAÇÃO ==========
-        document.querySelectorAll('.nav-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                // Remover active de todas
-                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
-                
-                // Adicionar active à clicada
-                tab.classList.add('active');
-                const target = tab.getAttribute('data-target');
-                document.getElementById(target).classList.add('active');
-                
-                // Se for configurações, carregar dados
-                if (target === 'settings') {
-                    professionalSettings.loadSettings();
-                }
-            });
-        });
+            <div class="form-group">
+                <label for="pacienteHDA">História da Doença Atual (HDA)</label>
+                <textarea id="pacienteHDA" rows="3" placeholder="Evolução, início, intensidade, fatores, etc."></textarea>
+            </div>
 
-        // ========== INICIALIZAÇÃO ==========
-        const professionalSettings = new ProfessionalSettings();
-        
-        // Mostrar mensagem de carregamento
-        document.addEventListener('DOMContentLoaded', () => {
-            showNotification('Sistema Willi carregado!');
-            
-            // Verificar se está online
-            if (!navigator.onLine) {
-                showNotification('Você está offline. Algumas funcionalidades podem estar limitadas.', 'error');
-            }
-        });
+            <div class="form-group">
+                <label for="pacienteExame">Exame Clínico</label>
+                <textarea id="pacienteExame" rows="3" placeholder="Sinais, achados, observações, etc."></textarea>
+            </div>
 
-        // Detectar mudança de conexão
-        window.addEventListener('online', () => showNotification('Conexão restaurada!'));
-        window.addEventListener('offline', () => showNotification('Você está offline', 'error'));
-    </script>
+            <div class="form-group">
+                <label for="pacienteHipotese">Hipótese Diagnóstica / CID (se aplicável)</label>
+                <input type="text" id="pacienteHipotese" placeholder="Ex: K04.7 / Dor odontogênica...">
+            </div>
+
+            <div class="form-group">
+                <label for="pacienteConduta">Conduta / Plano</label>
+                <textarea id="pacienteConduta" rows="3" placeholder="Prescrição, orientação, retorno, condutas..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="agendaData">Data e Hora do Agendamento *</label>
+                <input type="datetime-local" id="agendaData" required>
+            </div>
+            <div class="form-group">
+                <label for="agendaTipo">Tipo de Consulta</label>
+                <select id="agendaTipo">
+                    <option value="Retorno">Retorno</option>
+                    <option value="Primeira Consulta">Primeira Consulta</option>
+                    <option value="Urgência">Urgência</option>
+                    <option value="Exame">Exame</option>
+                </select>
+            </div>
+            <button type="submit" class="btn">📝 Salvar Prontuário & Agendar</button>
+        </form>
+
+        <div id="prontuarioAlert" class="system-alert hidden">✅ Prontuário salvo e consulta agendada na agenda!</div>
+
+        <div style="margin-top: 40px;">
+            <h3>Histórico de Pacientes Recentes</h3>
+            <div id="historicoPacientes">
+                <p>Nenhum paciente cadastrado ainda.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- RECEITUÁRIO -->
+    <div id="receita" class="tab-content">
+        <h2>Receituário Médico</h2>
+        <p>Preencha os dados da receita. Os dados do profissional serão preenchidos automaticamente.</p>
+
+        <form id="formReceita">
+            <div class="form-group">
+                <label for="receitaPaciente">Nome do Paciente *</label>
+                <input type="text" id="receitaPaciente" required>
+            </div>
+            <div class="form-group">
+                <label for="receitaMedicamentos">Medicamentos e Posologia *</label>
+                <textarea id="receitaMedicamentos" rows="6" placeholder="1) ...&#10;2) ..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="receitaObservacoes">Observações</label>
+                <textarea id="receitaObservacoes" rows="3" placeholder="Instruções adicionais..."></textarea>
+            </div>
+            <button type="submit" class="btn">🖨️ Gerar Receita para Impressão</button>
+        </form>
+
+        <!-- PRINT AREA -->
+        <div id="documentoReceita" class="document hidden print-area">
+            <div class="doc-header">
+                <h2>📄 Receituário</h2>
+                <p id="receitaProfissionalInfo">[Dados do Profissional]</p>
+                <p id="receitaEnderecoInfo">[Endereço da Clínica]</p>
+                <p id="receitaTelefoneInfo" style="opacity:0.9;"></p>
+            </div>
+            <p><strong>Paciente:</strong> <span id="docReceitaPaciente"></span></p>
+            <p><strong>Data:</strong> <span id="docReceitaData"></span></p>
+
+            <div style="margin: 25px 0;">
+                <h4>Prescrição:</h4>
+                <div id="docReceitaMedicamentos" style="white-space: pre-wrap; background:#f9f9f9; padding:15px; border-radius:5px;"></div>
+            </div>
+
+            <div style="margin: 25px 0;">
+                <h4>Observações:</h4>
+                <div id="docReceitaObservacoes" style="white-space: pre-wrap;"></div>
+            </div>
+
+            <div class="signature-area">
+                <p>_________________________________________</p>
+                <p id="receitaAssinatura">[Assinatura]</p>
+            </div>
+
+            <div style="text-align:center; margin-top:30px;">
+                <button class="btn" onclick="printOnly('documentoReceita')">🖨️ Imprimir esta Receita</button>
+                <button class="btn btn-secondary" onclick="hideDoc('documentoReceita')">✏️ Editar Novamente</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ATESTADO -->
+    <div id="atestado" class="tab-content">
+        <h2>Atestado Médico</h2>
+        <p>Preencha os dados do atestado. Os dados do profissional serão preenchidos automaticamente.</p>
+
+        <form id="formAtestado">
+            <div class="form-group">
+                <label for="atestadoPaciente">Nome do Paciente *</label>
+                <input type="text" id="atestadoPaciente" required>
+            </div>
+            <div class="form-group">
+                <label for="atestadoTexto">Texto do Atestado *</label>
+                <textarea id="atestadoTexto" rows="6" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="atestadoValidade">Validade / Período (opcional)</label>
+                <input type="text" id="atestadoValidade" placeholder="Ex: 3 dias, 29/01/2026 a 31/01/2026">
+            </div>
+            <button type="submit" class="btn">🖨️ Gerar Atestado para Impressão</button>
+        </form>
+
+        <!-- PRINT AREA -->
+        <div id="documentoAtestado" class="document hidden print-area">
+            <div class="doc-header">
+                <h2>🖋️ Atestado</h2>
+                <p id="atestadoProfissionalInfo">[Dados do Profissional]</p>
+                <p id="atestadoEnderecoInfo">[Endereço da Clínica]</p>
+                <p id="atestadoTelefoneInfo" style="opacity:0.9;"></p>
+            </div>
+            <p><strong>Paciente:</strong> <span id="docAtestadoPaciente"></span></p>
+            <p><strong>Data de Emissão:</strong> <span id="docAtestadoData"></span></p>
+
+            <div style="margin: 30px 0;">
+                <div id="docAtestadoTexto" style="white-space: pre-wrap; font-size: 1.1rem; line-height: 1.8;"></div>
+            </div>
+            <div style="margin: 25px 0;">
+                <p><strong>Validade/Período:</strong> <span id="docAtestadoValidade"></span></p>
+            </div>
+
+            <div class="signature-area">
+                <p>_________________________________________</p>
+                <p id="atestadoAssinatura">[Assinatura]</p>
+            </div>
+
+            <div style="text-align:center; margin-top:30px;">
+                <button class="btn" onclick="printOnly('documentoAtestado')">🖨️ Imprimir este Atestado</button>
+                <button class="btn btn-secondary" onclick="hideDoc('documentoAtestado')">✏️ Editar Novamente</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-note">
+        <p>Sistema funcional localmente. Os dados são salvos no seu navegador | Para backup, exporte os dados periodicamente.</p>
+    </div>
+
+<script>
+/* ==================== FUNÇÕES GERAIS ==================== */
+function openTab(tabName, btnEl) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(tabName).classList.add('active');
+    if(btnEl) btnEl.classList.add('active');
+    if(tabName === 'agenda') renderCalendar();
+}
+
+/* ==================== PRINT CORRETO (SÓ O DOCUMENTO) ==================== */
+function printOnly(docId){
+    // garante que só a área tenha a classe print-area visível no print
+    const el = document.getElementById(docId);
+    if(!el) return;
+
+    // força scroll para o documento antes de imprimir (evita render quebrado no celular)
+    el.scrollIntoView({behavior:'instant', block:'start'});
+
+    // pequena espera pra garantir layout antes do print
+    setTimeout(() => window.print(), 80);
+}
+function hideDoc(docId){
+    const el = document.getElementById(docId);
+    if(el) el.classList.add('hidden');
+}
+
+/* ==================== CONFIGURAÇÕES ==================== */
+const formConfig = document.getElementById('formConfig');
+const configAlert = document.getElementById('configAlert');
+['profNome','profEspecialidade','profEndereco','profTelefone'].forEach(id => {
+    const saved = localStorage.getItem(id);
+    if(saved) document.getElementById(id).value = saved;
+});
+formConfig.onsubmit = (e) => {
+    e.preventDefault();
+    ['profNome','profEspecialidade','profEndereco','profTelefone'].forEach(id => {
+        localStorage.setItem(id, document.getElementById(id).value);
+    });
+    configAlert.classList.remove('hidden');
+    setTimeout(() => configAlert.classList.add('hidden'), 3000);
+    return false;
+};
+
+/* ==================== AGENDA & PRONTUÁRIO ==================== */
+let appointments = JSON.parse(localStorage.getItem('appointments')) || [];
+let patients = JSON.parse(localStorage.getItem('patients')) || [];
+
+const formProntuario = document.getElementById('formProntuario');
+const prontuarioAlert = document.getElementById('prontuarioAlert');
+
+formProntuario.onsubmit = (e) => {
+    e.preventDefault();
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    if(submitBtn) submitBtn.disabled = true;
+
+    const patientData = {
+        id: Date.now(),
+        nome: document.getElementById('pacienteNome').value.trim(),
+        dataNasc: document.getElementById('pacienteDataNasc').value,
+        queixa: document.getElementById('pacienteQueixa').value.trim(),
+        hda: document.getElementById('pacienteHDA').value.trim(),
+        exame: document.getElementById('pacienteExame').value.trim(),
+        hipotese: document.getElementById('pacienteHipotese').value.trim(),
+        conduta: document.getElementById('pacienteConduta').value.trim(),
+        dataRegistro: new Date().toLocaleDateString('pt-BR')
+    };
+
+    patients.push(patientData);
+    localStorage.setItem('patients', JSON.stringify(patients));
+
+    const rawDateTime = document.getElementById('agendaData').value;
+    const [datePart, timePart] = rawDateTime.split('T');
+
+    const appointmentData = {
+        id: Date.now() + 1,
+        paciente: patientData.nome,
+        dataHora: rawDateTime,
+        data: datePart,
+        hora: timePart || '',
+        tipo: document.getElementById('agendaTipo').value,
+        queixa: (patientData.queixa || '').substring(0, 50) + ((patientData.queixa||'').length > 50 ? '...' : '')
+    };
+
+    appointments.push(appointmentData);
+    localStorage.setItem('appointments', JSON.stringify(appointments));
+
+    updateDoctorFilter();
+    renderCalendar();
+    renderPatientHistory();
+
+    prontuarioAlert.classList.remove('hidden');
+    formProntuario.reset();
+    if(submitBtn) submitBtn.disabled = false;
+    setTimeout(() => prontuarioAlert.classList.add('hidden'), 4000);
+    return false;
+};
+
+function renderPatientHistory() {
+    const container = document.getElementById('historicoPacientes');
+    if(patients.length === 0) {
+        container.innerHTML = '<p>Nenhum paciente cadastrado ainda.</p>';
+        return;
+    }
+    container.innerHTML = patients.slice(-5).reverse().map(p => `
+        <div style="background:#f8f9fa; padding:15px; border-radius:8px; margin-bottom:10px; border-left:4px solid #1a6dcc;">
+            <strong>${escapeHtml(p.nome)}</strong> | Nasc: ${p.dataNasc || 'N/A'}<br>
+            <em>Queixa: ${escapeHtml((p.queixa||'').substring(0,70))}${(p.queixa||'').length > 70 ? '...' : ''}</em><br>
+            <small>Registrado em: ${p.dataRegistro}</small>
+        </div>
+    `).join('');
+}
+
+/* ==================== CALENDÁRIO ==================== */
+let currentWeekOffset = 0;
+
+function renderCalendar(action = '') {
+    if(action === 'next') currentWeekOffset++;
+    if(action === 'prev') currentWeekOffset--;
+    if(action === 'today') currentWeekOffset = 0;
+
+    const today = new Date();
+    const startDate = new Date(today);
+    startDate.setDate(today.getDate() + (currentWeekOffset * 7) - today.getDay());
+
+    const days = [];
+    for(let i = 0; i < 7; i++) {
+        const date = new Date(startDate);
+        date.setDate(startDate.getDate() + i);
+        days.push(date);
+    }
+
+    const patientFilter = document.getElementById('filterDoctor').value;
+    const filteredApps = appointments.filter(a => !patientFilter || a.paciente === patientFilter);
+
+    const calendarHTML = days.map(day => {
+        const dayStr = day.toISOString().split('T')[0];
+        const dayApps = filteredApps
+            .filter(a => a.data === dayStr)
+            .sort((a,b) => (a.hora||'').localeCompare(b.hora||''));
+
+        return `
+            <div class="calendar-day">
+                <div class="day-header">${day.toLocaleDateString('pt-BR', {weekday: 'short', day: 'numeric', month: 'short'})}</div>
+                ${dayApps.map(app => `
+                    <div class="appointment ${app.tipo === 'Urgência' ? 'urgent' : ''}">
+                        <strong>${escapeHtml(app.paciente)}</strong><br>
+                        <small>${escapeHtml(app.tipo)}</small><br>
+                        <small>${escapeHtml(app.hora || '--:--')}h</small>
+                    </div>
+                `).join('')}
+                ${dayApps.length === 0 ? '<small style="color:#888;">Sem agendamentos</small>' : ''}
+            </div>
+        `;
+    }).join('');
+
+    document.getElementById('calendarContainer').innerHTML = calendarHTML;
+}
+
+function updateDoctorFilter() {
+    const uniquePatients = [...new Set(appointments.map(a => a.paciente))].sort((a,b)=>a.localeCompare(b));
+    const select = document.getElementById('filterDoctor');
+    select.innerHTML = '<option value="">Filtrar por Paciente</option>' +
+        uniquePatients.map(d => `<option value="${escapeAttr(d)}">${escapeHtml(d)}</option>`).join('');
+}
+
+/* ==================== RECEITA ==================== */
+document.getElementById('formReceita').onsubmit = (e) => {
+    e.preventDefault();
+
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    if(submitBtn) submitBtn.disabled = true;
+
+    const doc = document.getElementById('documentoReceita');
+    const profNome = localStorage.getItem('profNome') || '[Configure os dados]';
+    const profEsp = localStorage.getItem('profEspecialidade') || '';
+    const profEnd = localStorage.getItem('profEndereco') || '';
+    const profTel = localStorage.getItem('profTelefone') || '';
+
+    document.getElementById('receitaProfissionalInfo').textContent = `${profNome} | ${profEsp}`;
+    document.getElementById('receitaEnderecoInfo').textContent = profEnd;
+    document.getElementById('receitaTelefoneInfo').textContent = profTel ? `Contato: ${profTel}` : '';
+    document.getElementById('receitaAssinatura').textContent = profNome;
+
+    document.getElementById('docReceitaPaciente').textContent = document.getElementById('receitaPaciente').value;
+    document.getElementById('docReceitaData').textContent = new Date().toLocaleDateString('pt-BR');
+
+    // IMPORTANTE: preservar quebras de linha e evitar “grudar” texto
+    const meds = document.getElementById('receitaMedicamentos').value;
+    document.getElementById('docReceitaMedicamentos').textContent = meds;
+
+    const obs = document.getElementById('receitaObservacoes').value || 'Nenhuma observação adicional.';
+    document.getElementById('docReceitaObservacoes').textContent = obs;
+
+    doc.classList.remove('hidden');
+    doc.scrollIntoView({behavior: 'smooth'});
+
+    if(submitBtn) submitBtn.disabled = false;
+    return false;
+};
+
+/* ==================== ATESTADO ==================== */
+document.getElementById('formAtestado').onsubmit = (e) => {
+    e.preventDefault();
+
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    if(submitBtn) submitBtn.disabled = true;
+
+    const doc = document.getElementById('documentoAtestado');
+    const profNome = localStorage.getItem('profNome') || '[Configure os dados]';
+    const profEsp = localStorage.getItem('profEspecialidade') || '';
+    const profEnd = localStorage.getItem('profEndereco') || '';
+    const profTel = localStorage.getItem('profTelefone') || '';
+
+    document.getElementById('atestadoProfissionalInfo').textContent = `${profNome} | ${profEsp}`;
+    document.getElementById('atestadoEnderecoInfo').textContent = profEnd;
+    document.getElementById('atestadoTelefoneInfo').textContent = profTel ? `Contato: ${profTel}` : '';
+    document.getElementById('atestadoAssinatura').textContent = profNome;
+
+    document.getElementById('docAtestadoPaciente').textContent = document.getElementById('atestadoPaciente').value;
+    document.getElementById('docAtestadoData').textContent = new Date().toLocaleDateString('pt-BR');
+    document.getElementById('docAtestadoTexto').textContent = document.getElementById('atestadoTexto').value;
+    document.getElementById('docAtestadoValidade').textContent = document.getElementById('atestadoValidade').value || 'A critério do profissional.';
+
+    doc.classList.remove('hidden');
+    doc.scrollIntoView({behavior: 'smooth'});
+
+    if(submitBtn) submitBtn.disabled = false;
+    return false;
+};
+
+/* ==================== HELPERS (SEGURANÇA HTML) ==================== */
+function escapeHtml(str){
+    return (str||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+}
+function escapeAttr(str){
+    return (str||'').replace(/"/g,'&quot;');
+}
+
+/* ==================== INICIALIZAÇÃO ==================== */
+window.onload = () => {
+    updateDoctorFilter();
+    renderCalendar();
+    renderPatientHistory();
+};
+</script>
 </body>
 </html>
