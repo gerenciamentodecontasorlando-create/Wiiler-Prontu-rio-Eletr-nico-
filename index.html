@@ -32,7 +32,6 @@
             box-shadow: 0 4px 10px rgba(26, 109, 204, 0.3);
         }
         .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(26, 109, 204, 0.4); }
-        .btn:disabled { background: #cccccc; cursor: not-allowed; transform: none; box-shadow: none; }
         .btn-secondary { background: linear-gradient(to right, #6c757d, #495057); box-shadow: 0 4px 10px rgba(108, 117, 125, 0.3); }
         .btn-secondary:hover { box-shadow: 0 6px 15px rgba(108, 117, 125, 0.4); }
         .document { border: 2px solid #ccc; padding: 30px; border-radius: 10px; background: #fefefe; max-width: 800px; margin: 20px auto; }
@@ -72,7 +71,6 @@
         <button class="tab-button" onclick="openTab('atestado')">🖋️ Atestado</button>
     </div>
 
-    <!-- CONFIGURAÇÕES -->
     <div id="config" class="tab-content active">
         <div class="config-panel">
             <h3>Dados do Profissional</h3>
@@ -101,7 +99,6 @@
         <div id="configAlert" class="system-alert hidden">✅ Configurações salvas com sucesso! Os dados serão usados nos documentos.</div>
     </div>
 
-    <!-- AGENDA -->
     <div id="agenda" class="tab-content">
         <h2>Agenda Clínica</h2>
         <p style="margin-bottom:20px;">Visualize e gerencie os compromissos. <strong>Para adicionar um novo compromisso, use o formulário do Prontuário.</strong></p>
@@ -115,12 +112,10 @@
         </div>
 
         <div id="calendarContainer" class="calendar-grid">
-            <!-- O calendário será gerado aqui pelo JavaScript -->
             <p>Carregando agenda...</p>
         </div>
     </div>
 
-    <!-- PRONTUÁRIO E AGENDA -->
     <div id="prontuario" class="tab-content">
         <h2>Prontuário do Paciente & Agendamento</h2>
         <p>Preencha os dados do paciente e agende uma consulta ao mesmo tempo.</p>
@@ -158,13 +153,11 @@
         <div style="margin-top: 40px;">
             <h3>Histórico de Pacientes Recentes</h3>
             <div id="historicoPacientes">
-                <!-- Lista gerada por JavaScript -->
                 <p>Nenhum paciente cadastrado ainda.</p>
             </div>
         </div>
     </div>
 
-    <!-- RECEITUÁRIO -->
     <div id="receita" class="tab-content">
         <h2>Receituário Médico</h2>
         <p>Preencha os dados da receita. Os dados do profissional serão preenchidos automaticamente das configurações.</p>
@@ -212,7 +205,6 @@
         </div>
     </div>
 
-    <!-- ATESTADO -->
     <div id="atestado" class="tab-content">
         <h2>Atestado Médico</h2>
         <p>Preencha os dados do atestado. Os dados do profissional serão preenchidos automaticamente.</p>
@@ -295,32 +287,30 @@
 
         const formProntuario = document.getElementById('formProntuario');
         const prontuarioAlert = document.getElementById('prontuarioAlert');
+        
+        // ✅ CORREÇÃO 1: Agendamento funcionando
         formProntuario.onsubmit = (e) => {
             e.preventDefault();
-            
-            // Desabilitar botão para evitar duplo clique
-            const submitBtn = e.target.querySelector('button[type="submit"]');
-            if(submitBtn) submitBtn.disabled = true;
             
             const patientData = {
                 id: Date.now(),
                 nome: document.getElementById('pacienteNome').value,
                 dataNasc: document.getElementById('pacienteDataNasc').value,
                 queixa: document.getElementById('pacienteQueixa').value,
-                dataRegistro: new Date().toLocaleDateString('pt-BR')
+                data: new Date().toLocaleDateString('pt-BR')
             };
             patients.push(patientData);
             localStorage.setItem('patients', JSON.stringify(patients));
 
-            // CORREÇÃO DO AGENDAMENTO: Separar data e hora corretamente
             const rawDateTime = document.getElementById('agendaData').value;
             const [datePart, timePart] = rawDateTime.split('T');
+            
             const appointmentData = {
                 id: Date.now(),
                 paciente: patientData.nome,
-                dataHora: rawDateTime,           // Valor completo: "2026-01-28T15:30"
-                data: datePart,                  // Apenas data: "2026-01-28"
-                hora: timePart,                  // Apenas hora: "15:30"
+                dataHora: rawDateTime,
+                data: datePart,
+                hora: timePart || '',
                 tipo: document.getElementById('agendaTipo').value,
                 queixa: patientData.queixa.substring(0, 50) + '...'
             };
@@ -332,10 +322,6 @@
             renderPatientHistory();
             prontuarioAlert.classList.remove('hidden');
             formProntuario.reset();
-            
-            // Reativar botão após processamento
-            if(submitBtn) submitBtn.disabled = false;
-            
             setTimeout(() => prontuarioAlert.classList.add('hidden'), 4000);
             return false;
         };
@@ -350,13 +336,15 @@
                 <div style="background:#f8f9fa; padding:15px; border-radius:8px; margin-bottom:10px; border-left:4px solid #1a6dcc;">
                     <strong>${p.nome}</strong> | Nasc: ${p.dataNasc || 'N/A'}<br>
                     <em>Queixa: ${p.queixa.substring(0,70)}${p.queixa.length > 70 ? '...' : ''}</em><br>
-                    <small>Registrado em: ${p.dataRegistro}</small>
+                    <small>Registrado em: ${p.data}</small>
                 </div>
             `).join('');
         }
 
         // ==================== CALENDÁRIO ====================
         let currentWeekOffset = 0;
+        
+        // ✅ CORREÇÃO 2: Agenda mostrando compromissos
         function renderCalendar(action = '') {
             if(action === 'next') currentWeekOffset++;
             if(action === 'today') currentWeekOffset = 0;
@@ -375,7 +363,6 @@
 
             const calendarHTML = days.map(day => {
                 const dayStr = day.toISOString().split('T')[0];
-                // CORREÇÃO: Usar a propriedade 'data' corretamente para filtrar
                 const dayApps = filteredApps.filter(a => a.data === dayStr);
                 return `
                     <div class="calendar-day">
@@ -384,7 +371,6 @@
                             <div class="appointment ${app.tipo === 'Urgência' ? 'urgent' : ''}">
                                 <strong>${app.paciente}</strong><br>
                                 <small>${app.tipo}</small><br>
-                                <!-- CORREÇÃO: Usar a propriedade 'hora' separada -->
                                 <small>${app.hora}h</small>
                             </div>
                         `).join('')}
@@ -404,12 +390,13 @@
         }
 
         // ==================== RECEITA ====================
+        // ✅ CORREÇÃO 3: PDF aparece + sem duplicação
+        let isProcessingReceita = false;
         document.getElementById('formReceita').onsubmit = (e) => {
             e.preventDefault();
             
-            // CORREÇÃO DO PDF DUPLICADO: Desabilitar botão
-            const submitBtn = e.target.querySelector('button[type="submit"]');
-            if(submitBtn) submitBtn.disabled = true;
+            if(isProcessingReceita) return false;
+            isProcessingReceita = true;
             
             const doc = document.getElementById('documentoReceita');
             document.getElementById('receitaProfissionalInfo').textContent = `${localStorage.getItem('profNome') || '[Configure os dados]'} | ${localStorage.getItem('profEspecialidade') || ''}`;
@@ -422,19 +409,18 @@
             doc.classList.remove('hidden');
             doc.scrollIntoView({behavior: 'smooth'});
             
-            // Reativar botão após processamento
-            if(submitBtn) submitBtn.disabled = false;
-            
+            setTimeout(() => { isProcessingReceita = false; }, 1000);
             return false;
         };
 
         // ==================== ATESTADO ====================
+        // ✅ CORREÇÃO 4: PDF aparece + sem duplicação
+        let isProcessingAtestado = false;
         document.getElementById('formAtestado').onsubmit = (e) => {
             e.preventDefault();
             
-            // CORREÇÃO DO PDF DUPLICADO: Desabilitar botão
-            const submitBtn = e.target.querySelector('button[type="submit"]');
-            if(submitBtn) submitBtn.disabled = true;
+            if(isProcessingAtestado) return false;
+            isProcessingAtestado = true;
             
             const doc = document.getElementById('documentoAtestado');
             document.getElementById('atestadoProfissionalInfo').textContent = `${localStorage.getItem('profNome') || '[Configure os dados]'} | ${localStorage.getItem('profEspecialidade') || ''}`;
@@ -447,9 +433,7 @@
             doc.classList.remove('hidden');
             doc.scrollIntoView({behavior: 'smooth'});
             
-            // Reativar botão após processamento
-            if(submitBtn) submitBtn.disabled = false;
-            
+            setTimeout(() => { isProcessingAtestado = false; }, 1000);
             return false;
         };
 
@@ -461,4 +445,4 @@
         };
     </script>
 </body>
-                                                                    </html>
+</html>
