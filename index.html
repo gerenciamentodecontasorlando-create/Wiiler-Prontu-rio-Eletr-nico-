@@ -1,448 +1,1408 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema Clínico</title>
-    <style>
-        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
-        body { background: #f5f7fa; color: #333; padding: 20px; line-height: 1.6; }
-        header { background: linear-gradient(135deg, #1a6dcc, #0d4d9c); color: white; padding: 25px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 6px 15px rgba(0, 82, 204, 0.2); text-align: center; }
-        h1 { font-size: 2rem; margin-bottom: 8px; }
-        .subtitle { opacity: 0.9; font-size: 1rem; }
-        .tabs { display: flex; background: white; border-radius: 10px; overflow: hidden; margin-bottom: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); flex-wrap: wrap; }
-        .tab-button { flex: 1; padding: 18px; background: none; border: none; cursor: pointer; font-weight: 600; color: #666; transition: all 0.3s; text-align: center; min-width: 140px; }
-        .tab-button.active { color: #1a6dcc; border-bottom: 3px solid #1a6dcc; background-color: #f0f7ff; }
-        .tab-button:hover:not(.active) { background-color: #f9f9f9; }
-        .tab-content { display: none; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-top: 5px; }
-        .tab-content.active { display: block; animation: fadeIn 0.4s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .config-panel { background: #f0f7ff; border-left: 4px solid #1a6dcc; padding: 20px; border-radius: 8px; margin-bottom: 25px; }
-        .config-panel h3 { color: #0d4d9c; margin-bottom: 15px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: 600; color: #444; }
-        input, textarea, select {
-            width: 100%; padding: 14px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; transition: border 0.3s;
-            background-color: #fcfcfc;
-        }
-        input:focus, textarea:focus, select:focus { border-color: #1a6dcc; outline: none; background-color: #fff; }
-        .btn {
-            background: linear-gradient(to right, #1a6dcc, #0d4d9c); color: white; border: none; padding: 15px 30px;
-            border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; display: inline-block; text-decoration: none;
-            box-shadow: 0 4px 10px rgba(26, 109, 204, 0.3);
-        }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(26, 109, 204, 0.4); }
-        .btn-secondary { background: linear-gradient(to right, #6c757d, #495057); box-shadow: 0 4px 10px rgba(108, 117, 125, 0.3); }
-        .btn-secondary:hover { box-shadow: 0 6px 15px rgba(108, 117, 125, 0.4); }
-        .document { border: 2px solid #ccc; padding: 30px; border-radius: 10px; background: #fefefe; max-width: 800px; margin: 20px auto; }
-        .doc-header { text-align: center; border-bottom: 2px solid #1a6dcc; padding-bottom: 20px; margin-bottom: 25px; }
-        .signature-area { margin-top: 80px; padding-top: 20px; border-top: 1px dashed #666; text-align: center; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
-        .calendar-day { border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; background: #fff; min-height: 140px; }
-        .day-header { font-weight: bold; color: #1a6dcc; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 10px; }
-        .appointment { background: #e8f4ff; border-left: 4px solid #1a6dcc; padding: 10px; margin-top: 8px; border-radius: 4px; font-size: 0.9rem; }
-        .appointment.urgent { background: #ffe8e8; border-left-color: #dc3545; }
-        .hidden { display: none; }
-        .system-alert { background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; border: 1px solid #c3e6cb; margin: 20px 0; }
-        .footer-note { text-align: center; margin-top: 40px; color: #666; font-size: 0.9rem; }
-        @media (max-width: 768px) {
-            .calendar-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
-            .tab-button { min-width: 120px; padding: 15px 10px; }
-        }
-        @media (max-width: 480px) {
-            body { padding: 15px; }
-            header { padding: 20px 15px; }
-            .tab-button { min-width: 100%; }
-            .document { padding: 20px 15px; }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BTX • Prontuário + Agenda (HTML)</title>
+
+  <!-- jsPDF (PDF confiável, sem print) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    :root{
+      --bg:#0b1220;
+      --panel:#101c33;
+      --card:#122544;
+      --line:#223a67;
+      --text:#e8efff;
+      --muted:#9fb3da;
+      --accent:#1a6dcc;
+      --accent2:#0d4d9c;
+      --danger:#dc3545;
+      --ok:#22c55e;
+      --radius:14px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: "Segoe UI", system-ui, -apple-system, Arial;
+      color:var(--text);
+      background:
+        radial-gradient(1000px 600px at 15% 0%, rgba(26,109,204,.28), transparent 60%),
+        radial-gradient(900px 520px at 85% 10%, rgba(13,77,156,.32), transparent 55%),
+        var(--bg);
+      padding:14px;
+    }
+    header{
+      display:flex; gap:12px; align-items:center; justify-content:space-between;
+      padding:14px 14px;
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, rgba(26,109,204,.92), rgba(13,77,156,.95));
+      box-shadow: 0 10px 28px rgba(0,0,0,.28);
+      flex-wrap:wrap;
+    }
+    header .left{display:flex; gap:12px; align-items:center}
+    .logo{
+      width:44px;height:44px;border-radius:14px;
+      background: rgba(255,255,255,.14);
+      border:1px solid rgba(255,255,255,.18);
+      display:grid;place-items:center;
+      font-size:22px;
+    }
+    header h1{margin:0;font-size:18px;line-height:1.1}
+    header p{margin:4px 0 0;font-size:12px;opacity:.9}
+    .btn{
+      border:none; cursor:pointer; user-select:none;
+      padding:10px 12px;
+      border-radius: 12px;
+      font-weight:800;
+      color:white;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      box-shadow: 0 10px 18px rgba(0,0,0,.22);
+      display:inline-flex; align-items:center; gap:8px;
+      transition: transform .12s ease;
+    }
+    .btn:active{transform: translateY(1px)}
+    .btn.secondary{
+      background: linear-gradient(90deg, rgba(255,255,255,.14), rgba(255,255,255,.10));
+      border:1px solid rgba(255,255,255,.16);
+      color: var(--text);
+      box-shadow:none;
+    }
+    .btn.danger{
+      background: linear-gradient(90deg, rgba(220,53,69,.95), rgba(179,39,52,.98));
+    }
+
+    .grid{
+      margin-top:14px;
+      display:grid;
+      grid-template-columns: 330px 1fr;
+      gap:14px;
+    }
+    @media (max-width: 980px){
+      .grid{grid-template-columns: 1fr}
+    }
+
+    .panel{
+      background: rgba(16,28,51,.88);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      box-shadow: 0 12px 30px rgba(0,0,0,.28);
+      overflow:hidden;
+    }
+    .tabs{
+      display:flex; flex-wrap:wrap;
+      background: rgba(255,255,255,.06);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .tab{
+      flex:1; min-width: 140px;
+      padding:12px 12px;
+      background: transparent;
+      border:none;
+      cursor:pointer;
+      color: rgba(231,238,252,.78);
+      font-weight:900;
+      display:flex; gap:8px; align-items:center; justify-content:center;
+    }
+    .tab.active{
+      color:white;
+      background: linear-gradient(180deg, rgba(26,109,204,.22), rgba(13,77,156,.08));
+      border-bottom: 3px solid rgba(26,109,204,.9);
+    }
+
+    .content{padding:14px}
+    .title{margin:0 0 10px; font-size:14px; font-weight:1000; letter-spacing:.2px}
+    .hint{margin:0 0 12px; font-size:12px; color: var(--muted)}
+    .card{
+      background: rgba(18,37,68,.74);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius: 14px;
+      padding:12px;
+      margin-bottom:12px;
+    }
+    .row{display:grid; grid-template-columns: 1fr 1fr; gap:10px}
+    @media (max-width: 520px){ .row{grid-template-columns:1fr} }
+    label{display:block; font-size:12px; font-weight:900; color: rgba(231,238,252,.86); margin:0 0 6px}
+    input, select, textarea{
+      width:100%;
+      padding:11px 12px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.22);
+      color: var(--text);
+      outline:none;
+    }
+    input:focus, select:focus, textarea:focus{
+      border-color: rgba(26,109,204,.75);
+      box-shadow: 0 0 0 3px rgba(26,109,204,.18);
+    }
+    textarea{min-height: 92px; resize: vertical}
+
+    .list{display:flex; flex-direction:column; gap:10px}
+    .item{
+      background: rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 14px;
+      padding:10px 12px;
+    }
+    .item .top{display:flex; justify-content:space-between; gap:10px; align-items:flex-start}
+    .pill{
+      font-size:11px; font-weight:1000;
+      padding:4px 8px;
+      border-radius: 999px;
+      background: rgba(26,109,204,.22);
+      border:1px solid rgba(26,109,204,.35);
+      white-space:nowrap;
+    }
+    .pill.urg{background: rgba(220,53,69,.16); border-color: rgba(220,53,69,.35)}
+    .meta{margin-top:6px; color: rgba(231,238,252,.72); font-size:12px; line-height:1.35}
+    .toolbar{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; align-items:center}
+    .small{font-size:11px; color: rgba(231,238,252,.70)}
+    .hr{height:1px; background: rgba(255,255,255,.08); margin:12px 0}
+
+    /* CALENDÁRIO MENSAL CLICÁVEL */
+    .calWrap{display:flex; flex-direction:column; gap:10px}
+    .calHead{display:flex; gap:10px; align-items:center; justify-content:space-between}
+    .calGrid{
+      display:grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap:8px;
+    }
+    .dow{font-size:11px; color: rgba(231,238,252,.70); font-weight:900; text-align:center}
+    .dayCell{
+      min-height:78px;
+      border-radius: 14px;
+      padding:8px;
+      background: rgba(0,0,0,.16);
+      border:1px solid rgba(255,255,255,.10);
+      cursor:pointer;
+      transition: transform .08s ease, border-color .08s ease;
+      overflow:hidden;
+    }
+    .dayCell:hover{transform: translateY(-1px); border-color: rgba(26,109,204,.35)}
+    .dayCell.muted{opacity:.45}
+    .dayCell.selected{outline: 2px solid rgba(26,109,204,.65)}
+    .dayNum{font-weight:1000; font-size:12px}
+    .badgeApt{
+      margin-top:6px;
+      display:inline-block;
+      font-size:10px;
+      font-weight:1000;
+      padding:3px 7px;
+      border-radius:999px;
+      background: rgba(26,109,204,.22);
+      border:1px solid rgba(26,109,204,.30);
+    }
+
+    /* Preview PDF */
+    .pdfBox{
+      border-radius: 14px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+      height: 520px;
+    }
+    .pdfBox iframe{width:100%; height:100%; border:0; background:white}
+    .toast{
+      position: fixed;
+      left: 16px; right:16px;
+      bottom: 16px;
+      padding:12px 14px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.72);
+      border:1px solid rgba(255,255,255,.12);
+      backdrop-filter: blur(10px);
+      display:none;
+      box-shadow: 0 14px 30px rgba(0,0,0,.35);
+      z-index: 50;
+    }
+    .toast.show{display:block}
+    .toast b{color:white}
+  </style>
 </head>
+
 <body>
-    <header>
-        <h1>🧠 Sistema Clínico</h1>
-        <p class="subtitle">Prontuário, Agenda e Documentos | Dados salvos localmente</p>
-    </header>
+<header>
+  <div class="left">
+    <div class="logo">🧠</div>
+    <div>
+      <h1>BTX • Prontuário + Agenda</h1>
+      <p>HTML único • Prontuário evolutivo • Agenda clicável • PDF estável (jsPDF)</p>
+    </div>
+  </div>
+  <div class="right" style="display:flex; gap:10px; flex-wrap:wrap">
+    <button class="btn secondary" onclick="exportBackup()">⬇️ Backup</button>
+    <button class="btn secondary" onclick="importBackup()">⬆️ Restaurar</button>
+    <button class="btn danger" onclick="clearAll()">🗑️ Limpar</button>
+  </div>
+</header>
 
+<div class="grid">
+  <!-- Sidebar -->
+  <div class="panel">
     <div class="tabs">
-        <button class="tab-button active" onclick="openTab('config')">⚙️ Configurações</button>
-        <button class="tab-button" onclick="openTab('agenda')">📅 Agenda</button>
-        <button class="tab-button" onclick="openTab('prontuario')">📋 Prontuário</button>
-        <button class="tab-button" onclick="openTab('receita')">📄 Receituário</button>
-        <button class="tab-button" onclick="openTab('atestado')">🖋️ Atestado</button>
+      <button class="tab active" data-tab="config">⚙️ Config</button>
+      <button class="tab" data-tab="agenda">📅 Agenda</button>
+      <button class="tab" data-tab="pacientes">👤 Pacientes</button>
+      <button class="tab" data-tab="docs">📄 PDFs</button>
     </div>
+    <div class="content" id="side"></div>
+  </div>
 
-    <div id="config" class="tab-content active">
-        <div class="config-panel">
-            <h3>Dados do Profissional</h3>
-            <p>Preencha uma vez. Os dados aparecerão automaticamente nos documentos.</p>
-        </div>
-        <form id="formConfig">
-            <div class="form-group">
-                <label for="profNome">Nome Completo *</label>
-                <input type="text" id="profNome" placeholder="Ex: Dr. João Silva" required>
-            </div>
-            <div class="form-group">
-                <label for="profEspecialidade">Especialidade / CRM *</label>
-                <input type="text" id="profEspecialidade" placeholder="Ex: Neurologista • 12345/SP" required>
-            </div>
-            <div class="form-group">
-                <label for="profEndereco">Endereço da Clínica</label>
-                <textarea id="profEndereco" rows="3" placeholder="Rua, Número - Bairro, Cidade - Estado, CEP"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="profTelefone">Telefone de Contato</label>
-                <input type="text" id="profTelefone" placeholder="(11) 99999-8888">
-            </div>
-            <button type="submit" class="btn">💾 Salvar Dados Profissionais</button>
-            <button type="button" class="btn btn-secondary" onclick="localStorage.clear(); location.reload();">🗑️ Limpar Todos os Dados Salvos</button>
-        </form>
-        <div id="configAlert" class="system-alert hidden">✅ Configurações salvas com sucesso! Os dados serão usados nos documentos.</div>
-    </div>
+  <!-- Main -->
+  <div class="panel">
+    <div class="content" id="main"></div>
+  </div>
+</div>
 
-    <div id="agenda" class="tab-content">
-        <h2>Agenda Clínica</h2>
-        <p style="margin-bottom:20px;">Visualize e gerencie os compromissos. <strong>Para adicionar um novo compromisso, use o formulário do Prontuário.</strong></p>
+<div class="toast" id="toast"></div>
 
-        <div style="margin-bottom:25px; display:flex; gap:15px; flex-wrap:wrap;">
-            <button class="btn" onclick="renderCalendar('next')">Próxima Semana</button>
-            <button class="btn btn-secondary" onclick="renderCalendar('today')">Hoje</button>
-            <select id="filterDoctor" onchange="renderCalendar()" style="padding:12px; border-radius:8px; border:2px solid #ddd;">
-                <option value="">Filtrar por Profissional</option>
-            </select>
-        </div>
+<script>
+/* =========================
+   BANCO (localStorage)
+========================= */
+const KEY = "btx_html_prontuario_v2";
 
-        <div id="calendarContainer" class="calendar-grid">
-            <p>Carregando agenda...</p>
-        </div>
-    </div>
+function loadDB(){
+  try { return JSON.parse(localStorage.getItem(KEY) || "{}"); }
+  catch(e){ return {}; }
+}
+function saveDB(db){ localStorage.setItem(KEY, JSON.stringify(db)); }
 
-    <div id="prontuario" class="tab-content">
-        <h2>Prontuário do Paciente & Agendamento</h2>
-        <p>Preencha os dados do paciente e agende uma consulta ao mesmo tempo.</p>
+function ensureDB(){
+  const db = loadDB();
+  db.prof = db.prof || {
+    categoria:"Misto (CRM/CRO)",
+    nome:"",
+    registro:"",
+    contato:"",
+    endereco:"",
+    cidadeUF:""
+  };
+  db.pacientes = db.pacientes || [];   // {id, nome, nasc, telefone, obs}
+  db.evolucoes = db.evolucoes || [];   // {id, pacienteId, dataISO, tipoAtend, soapS, soapO, soapA, soapP, odonto, exames, conduta, anotacoes}
+  db.agenda = db.agenda || [];         // {id, pacienteId, dataISO, hora, tipo, resumo}
+  saveDB(db);
+  return db;
+}
+let db = ensureDB();
 
-        <form id="formProntuario">
-            <div class="form-group">
-                <label for="pacienteNome">Nome do Paciente *</label>
-                <input type="text" id="pacienteNome" required>
-            </div>
-            <div class="form-group">
-                <label for="pacienteDataNasc">Data de Nascimento</label>
-                <input type="date" id="pacienteDataNasc">
-            </div>
-            <div class="form-group">
-                <label for="pacienteQueixa">Queixa Principal / Motivo da Consulta *</label>
-                <textarea id="pacienteQueixa" rows="3" required></textarea>
-            </div>
-            <div class="form-group">
-                <label for="agendaData">Data e Hora do Agendamento *</label>
-                <input type="datetime-local" id="agendaData" required>
-            </div>
-            <div class="form-group">
-                <label for="agendaTipo">Tipo de Consulta</label>
-                <select id="agendaTipo">
-                    <option value="Retorno">Retorno</option>
-                    <option value="Primeira Consulta">Primeira Consulta</option>
-                    <option value="Urgência">Urgência</option>
-                    <option value="Exame">Exame</option>
-                </select>
-            </div>
-            <button type="submit" class="btn">📝 Salvar Prontuário & Agendar</button>
-        </form>
-        <div id="prontuarioAlert" class="system-alert hidden">✅ Prontuário salvo e consulta agendada na agenda!</div>
+/* =========================
+   ESTADO
+========================= */
+let activeTab = "config";
+let selectedPatientId = null;
+let selectedDayISO = toISODate(new Date());  // YYYY-MM-DD
+let monthCursor = new Date(); // mês atual
+let pdfURL = null; // para não duplicar e sempre atualizar preview
 
-        <div style="margin-top: 40px;">
-            <h3>Histórico de Pacientes Recentes</h3>
-            <div id="historicoPacientes">
-                <p>Nenhum paciente cadastrado ainda.</p>
-            </div>
-        </div>
-    </div>
+/* =========================
+   HELPERS
+========================= */
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
 
-    <div id="receita" class="tab-content">
-        <h2>Receituário Médico</h2>
-        <p>Preencha os dados da receita. Os dados do profissional serão preenchidos automaticamente das configurações.</p>
+function toast(msg, ok=true){
+  const t = document.getElementById("toast");
+  t.innerHTML = `<b>${ok ? "✅" : "⚠️"}</b> ${msg}`;
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"), 2600);
+}
 
-        <form id="formReceita">
-            <div class="form-group">
-                <label for="receitaPaciente">Nome do Paciente *</label>
-                <input type="text" id="receitaPaciente" required>
-            </div>
-            <div class="form-group">
-                <label for="receitaMedicamentos">Medicamentos e Posologia *</label>
-                <textarea id="receitaMedicamentos" rows="6" placeholder="Ex: Losartana 50mg - 1 comprimido ao dia" required></textarea>
-            </div>
-            <div class="form-group">
-                <label for="receitaObservacoes">Observações</label>
-                <textarea id="receitaObservacoes" rows="3" placeholder="Instruções adicionais..."></textarea>
-            </div>
-            <button type="submit" class="btn">🖨️ Gerar Receita para Impressão</button>
-        </form>
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2); }
 
-        <div id="documentoReceita" class="document hidden">
-            <div class="doc-header">
-                <h2>📄 Receituário Médico</h2>
-                <p id="receitaProfissionalInfo">[Dados do Profissional]</p>
-                <p id="receitaEnderecoInfo">[Endereço da Clínica]</p>
-            </div>
-            <p><strong>Paciente:</strong> <span id="docReceitaPaciente"></span></p>
-            <p><strong>Data:</strong> <span id="docReceitaData"></span></p>
-            <div style="margin: 25px 0;">
-                <h4>Prescrição Médica:</h4>
-                <p id="docReceitaMedicamentos" style="white-space: pre-line; background:#f9f9f9; padding:15px; border-radius:5px;"></p>
-            </div>
-            <div style="margin: 25px 0;">
-                <h4>Observações:</h4>
-                <p id="docReceitaObservacoes" style="white-space: pre-line;"></p>
-            </div>
-            <div class="signature-area">
-                <p>_________________________________________</p>
-                <p id="receitaAssinatura">[Assinatura do Médico]</p>
-            </div>
-            <div style="text-align:center; margin-top:30px;">
-                <button class="btn" onclick="window.print();">🖨️ Imprimir esta Receita</button>
-                <button class="btn btn-secondary" onclick="document.getElementById('documentoReceita').classList.add('hidden')">✏️ Editar Novamente</button>
-            </div>
-        </div>
-    </div>
+function toISODate(d){
+  const dt = new Date(d);
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth()+1).padStart(2,'0');
+  const da = String(dt.getDate()).padStart(2,'0');
+  return `${y}-${m}-${da}`;
+}
 
-    <div id="atestado" class="tab-content">
-        <h2>Atestado Médico</h2>
-        <p>Preencha os dados do atestado. Os dados do profissional serão preenchidos automaticamente.</p>
+function fmtBRDate(iso){
+  const d = new Date(iso);
+  return d.toLocaleDateString("pt-BR");
+}
 
-        <form id="formAtestado">
-            <div class="form-group">
-                <label for="atestadoPaciente">Nome do Paciente *</label>
-                <input type="text" id="atestadoPaciente" required>
-            </div>
-            <div class="form-group">
-                <label for="atestadoTexto">Texto do Atestado *</label>
-                <textarea id="atestadoTexto" rows="6" placeholder="Ex: Atesto que o(a) Sr(a) ... necessita de repouso pelo período de ... dias." required></textarea>
-            </div>
-            <div class="form-group">
-                <label for="atestadoValidade">Validade / Período (opcional)</label>
-                <input type="text" id="atestadoValidade" placeholder="Ex: 3 dias, 29/01/2026 a 31/01/2026">
-            </div>
-            <button type="submit" class="btn">🖨️ Gerar Atestado para Impressão</button>
-        </form>
+function fmtBRDateTime(iso){
+  const d = new Date(iso);
+  return d.toLocaleString("pt-BR");
+}
 
-        <div id="documentoAtestado" class="document hidden">
-            <div class="doc-header">
-                <h2>🖋️ Atestado Médico</h2>
-                <p id="atestadoProfissionalInfo">[Dados do Profissional]</p>
-                <p id="atestadoEnderecoInfo">[Endereço da Clínica]</p>
-            </div>
-            <p><strong>Paciente:</strong> <span id="docAtestadoPaciente"></span></p>
-            <p><strong>Data de Emissão:</strong> <span id="docAtestadoData"></span></p>
-            <div style="margin: 30px 0;">
-                <p id="docAtestadoTexto" style="white-space: pre-line; font-size: 1.1rem; line-height: 1.8;"></p>
-            </div>
-            <div style="margin: 25px 0;">
-                <p><strong>Validade/Período:</strong> <span id="docAtestadoValidade"></span></p>
-            </div>
-            <div class="signature-area">
-                <p>_________________________________________</p>
-                <p id="atestadoAssinatura">[Assinatura do Médico]</p>
-            </div>
-            <div style="text-align:center; margin-top:30px;">
-                <button class="btn" onclick="window.print();">🖨️ Imprimir este Atestado</button>
-                <button class="btn btn-secondary" onclick="document.getElementById('documentoAtestado').classList.add('hidden')">✏️ Editar Novamente</button>
-            </div>
-        </div>
-    </div>
+function byName(a,b){ return (a.nome||"").localeCompare(b.nome||""); }
 
-    <div class="footer-note">
-        <p>Sistema funcional localmente. Os dados são salvos no seu navegador | Para backup, exporte os dados periodicamente.</p>
-    </div>
+function getPatient(id){ return db.pacientes.find(p=>p.id===id) || null; }
 
-    <script>
-        // ==================== FUNÇÕES GERAIS ====================
-        function openTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(tabName).classList.add('active');
-            event.currentTarget.classList.add('active');
-            if(tabName === 'agenda') renderCalendar();
+function getEvolucoes(pId){
+  return db.evolucoes
+    .filter(e=>e.pacienteId===pId)
+    .sort((a,b)=> new Date(b.dataISO) - new Date(a.dataISO));
+}
+
+function getAgendaByDay(dayISO){
+  return db.agenda
+    .filter(a => toISODate(a.dataISO) === dayISO)
+    .sort((a,b)=>(a.hora||"").localeCompare(b.hora||""));
+}
+
+function safe(v){ return (v||"").toString(); }
+
+/* =========================
+   BACKUP FUNCTIONS
+========================= */
+function exportBackup() {
+  const db = loadDB();
+  const dataStr = JSON.stringify(db, null, 2);
+  const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+  const exportFileDefaultName = `backup-btx-${new Date().toISOString().slice(0,10)}.json`;
+  
+  const linkElement = document.createElement('a');
+  linkElement.setAttribute('href', dataUri);
+  linkElement.setAttribute('download', exportFileDefaultName);
+  linkElement.click();
+  toast("Backup exportado");
+}
+
+function importBackup() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (confirm('Restaurar backup? Isso sobrescreverá todos os dados atuais.')) {
+          localStorage.setItem(KEY, JSON.stringify(data));
+          db = ensureDB();
+          toast('Backup restaurado com sucesso!');
+          setTimeout(() => location.reload(), 800);
         }
+      } catch(err) {
+        toast('Erro ao restaurar backup', false);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
 
-        // ==================== CONFIGURAÇÕES ====================
-        const formConfig = document.getElementById('formConfig');
-        const configAlert = document.getElementById('configAlert');
-        ['profNome','profEspecialidade','profEndereco','profTelefone'].forEach(id => {
-            const saved = localStorage.getItem(id);
-            if(saved) document.getElementById(id).value = saved;
-        });
-        formConfig.onsubmit = (e) => {
-            e.preventDefault();
-            ['profNome','profEspecialidade','profEndereco','profTelefone'].forEach(id => {
-                localStorage.setItem(id, document.getElementById(id).value);
-            });
-            configAlert.classList.remove('hidden');
-            setTimeout(() => configAlert.classList.add('hidden'), 3000);
-            return false;
-        };
+function clearAll() {
+  if (confirm('Tem certeza? Isso excluirá TODOS os dados: pacientes, agendamentos, evoluções e configurações.')) {
+    localStorage.removeItem(KEY);
+    db = ensureDB();
+    toast('Todos os dados foram removidos');
+    setTimeout(() => location.reload(), 800);
+  }
+}
 
-        // ==================== AGENDA & PRONTUÁRIO ====================
-        let appointments = JSON.parse(localStorage.getItem('appointments')) || [];
-        let patients = JSON.parse(localStorage.getItem('patients')) || [];
+/* =========================
+   NAVEGAÇÃO DE ABAS
+========================= */
+document.querySelectorAll(".tab").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    activeTab = btn.dataset.tab;
+    document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    render();
+  });
+});
 
-        const formProntuario = document.getElementById('formProntuario');
-        const prontuarioAlert = document.getElementById('prontuarioAlert');
-        
-        // ✅ CORREÇÃO 1: Agendamento funcionando
-        formProntuario.onsubmit = (e) => {
-            e.preventDefault();
-            
-            const patientData = {
-                id: Date.now(),
-                nome: document.getElementById('pacienteNome').value,
-                dataNasc: document.getElementById('pacienteDataNasc').value,
-                queixa: document.getElementById('pacienteQueixa').value,
-                data: new Date().toLocaleDateString('pt-BR')
-            };
-            patients.push(patientData);
-            localStorage.setItem('patients', JSON.stringify(patients));
+/* =========================
+   RENDER
+========================= */
+function render(){
+  if(activeTab==="config"){ renderConfig(); }
+  if(activeTab==="agenda"){ renderAgenda(); }
+  if(activeTab==="pacientes"){ renderPacientes(); }
+  if(activeTab==="docs"){ renderDocs(); }
+}
+render();
 
-            const rawDateTime = document.getElementById('agendaData').value;
-            const [datePart, timePart] = rawDateTime.split('T');
-            
-            const appointmentData = {
-                id: Date.now(),
-                paciente: patientData.nome,
-                dataHora: rawDateTime,
-                data: datePart,
-                hora: timePart || '',
-                tipo: document.getElementById('agendaTipo').value,
-                queixa: patientData.queixa.substring(0, 50) + '...'
-            };
-            appointments.push(appointmentData);
-            localStorage.setItem('appointments', JSON.stringify(appointments));
+/* =========================
+   TAB: CONFIG
+========================= */
+function renderConfig(){
+  const p = db.prof;
 
-            updateDoctorFilter();
-            renderCalendar();
-            renderPatientHistory();
-            prontuarioAlert.classList.remove('hidden');
-            formProntuario.reset();
-            setTimeout(() => prontuarioAlert.classList.add('hidden'), 4000);
-            return false;
-        };
+  side.innerHTML = `
+    <div class="card">
+      <div class="title">⚙️ Configurações</div>
+      <div class="hint">Defina seus dados uma vez. Eles entram nos PDFs.</div>
 
-        function renderPatientHistory() {
-            const container = document.getElementById('historicoPacientes');
-            if(patients.length === 0) {
-                container.innerHTML = '<p>Nenhum paciente cadastrado ainda.</p>';
-                return;
-            }
-            container.innerHTML = patients.slice(-5).reverse().map(p => `
-                <div style="background:#f8f9fa; padding:15px; border-radius:8px; margin-bottom:10px; border-left:4px solid #1a6dcc;">
-                    <strong>${p.nome}</strong> | Nasc: ${p.dataNasc || 'N/A'}<br>
-                    <em>Queixa: ${p.queixa.substring(0,70)}${p.queixa.length > 70 ? '...' : ''}</em><br>
-                    <small>Registrado em: ${p.data}</small>
+      <label>Categoria</label>
+      <select id="profCat">
+        <option ${p.categoria==="Misto (CRM/CRO)"?"selected":""}>Misto (CRM/CRO)</option>
+        <option ${p.categoria==="Médico (CRM)"?"selected":""}>Médico (CRM)</option>
+        <option ${p.categoria==="Dentista (CRO)"?"selected":""}>Dentista (CRO)</option>
+      </select>
+
+      <label>Nome do Profissional</label>
+      <input id="profNome" value="${safe(p.nome)}" placeholder="Ex: Dr. Orlando Abreu..." />
+
+      <label>Registro (CRM/CRO)</label>
+      <input id="profReg" value="${safe(p.registro)}" placeholder="Ex: CRM/PA 0000 ou CRO/PA 0000" />
+
+      <label>Contato</label>
+      <input id="profCont" value="${safe(p.contato)}" placeholder="Telefone / WhatsApp" />
+
+      <label>Endereço</label>
+      <input id="profEnd" value="${safe(p.endereco)}" placeholder="Rua, nº, bairro" />
+
+      <label>Cidade/UF</label>
+      <input id="profCity" value="${safe(p.cidadeUF)}" placeholder="Abaetetuba - PA" />
+
+      <button class="btn" onclick="saveProf()">💾 Salvar Config</button>
+    </div>
+
+    <div class="card">
+      <div class="title">🧠 Regras do sistema</div>
+      <div class="hint">
+        • Agenda é por dia (clique no calendário) <br/>
+        • Prontuário é evolutivo (cada retorno vira nova evolução) <br/>
+        • PDF é gerado por jsPDF (não duplica).
+      </div>
+    </div>
+  `;
+
+  main.innerHTML = `
+    <div class="card">
+      <div class="title">📌 Bem-vindo</div>
+      <p class="hint" style="margin-bottom:0">
+        Use as abas para: <b>Agenda</b> → agendar no dia certo; <b>Pacientes</b> → prontuário evolutivo; <b>PDFs</b> → gerar e ver o PDF na tela.
+      </p>
+    </div>
+  `;
+}
+
+function saveProf(){
+  db.prof.categoria = document.getElementById("profCat").value;
+  db.prof.nome = document.getElementById("profNome").value.trim();
+  db.prof.registro = document.getElementById("profReg").value.trim();
+  db.prof.contato = document.getElementById("profCont").value.trim();
+  db.prof.endereco = document.getElementById("profEnd").value.trim();
+  db.prof.cidadeUF = document.getElementById("profCity").value.trim();
+  saveDB(db);
+  toast("Configurações salvas.");
+}
+
+/* =========================
+   TAB: AGENDA (CALENDÁRIO + AGENDAR)
+========================= */
+function renderAgenda(){
+  side.innerHTML = `
+    <div class="card">
+      <div class="title">📅 Calendário</div>
+      <div class="hint">Clique em um dia para ver/adicionar consultas naquele dia.</div>
+
+      ${renderMonthCalendar()}
+
+      <div class="hr"></div>
+      <div class="title">➕ Agendar no dia</div>
+
+      <label>Dia selecionado</label>
+      <input id="agDia" value="${selectedDayISO}" readonly />
+
+      <label>Paciente</label>
+      <select id="agPaciente">
+        <option value="">Selecione...</option>
+        ${db.pacientes.slice().sort(byName).map(p=>`<option value="${p.id}">${escapeHtml(p.nome)}</option>`).join("")}
+      </select>
+
+      <div class="row">
+        <div>
+          <label>Hora</label>
+          <input id="agHora" type="time" value="08:00"/>
+        </div>
+        <div>
+          <label>Tipo</label>
+          <select id="agTipo">
+            <option>Primeira Consulta</option>
+            <option selected>Retorno</option>
+            <option>Urgência</option>
+            <option>Exame</option>
+            <option>Procedimento</option>
+          </select>
+        </div>
+      </div>
+
+      <label>Resumo (opcional)</label>
+      <input id="agResumo" placeholder="Ex: Dor 36, abscesso, retorno 7 dias..." />
+
+      <button class="btn" onclick="addAgenda()">✅ Agendar</button>
+    </div>
+  `;
+
+  const apts = getAgendaByDay(selectedDayISO);
+
+  main.innerHTML = `
+    <div class="card">
+      <div class="title">📍 Agenda do dia: ${fmtBRDate(selectedDayISO)}</div>
+      <div class="hint">Clique no paciente abaixo para abrir o prontuário (evoluções).</div>
+
+      <div class="list">
+        ${apts.length ? apts.map(a=>{
+          const p = getPatient(a.pacienteId);
+          const urg = (a.tipo==="Urgência");
+          return `
+            <div class="item">
+              <div class="top">
+                <div>
+                  <strong>${escapeHtml(p ? p.nome : "Paciente removido")}</strong>
+                  <div class="meta">${escapeHtml(a.resumo||"")}</div>
+                  <div class="small">${escapeHtml(a.hora||"--:--")} • ${escapeHtml(a.tipo)}</div>
                 </div>
-            `).join('');
-        }
+                <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end">
+                  <span class="pill ${urg?"urg":""}">${escapeHtml(a.tipo)}</span>
+                  <button class="btn secondary" onclick="openPatientFromAgenda('${a.pacienteId}')">Abrir</button>
+                  <button class="btn danger" onclick="delAgenda('${a.id}')">Excluir</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join("") : `<div class="hint">Sem agendamentos neste dia.</div>`}
+      </div>
+    </div>
+  `;
+}
 
-        // ==================== CALENDÁRIO ====================
-        let currentWeekOffset = 0;
+function renderMonthCalendar(){
+  const d = new Date(monthCursor);
+  const year = d.getFullYear();
+  const month = d.getMonth();
+
+  const first = new Date(year, month, 1);
+  const last = new Date(year, month+1, 0);
+  const startDow = first.getDay(); // 0 dom
+  const totalDays = last.getDate();
+
+  const monthName = first.toLocaleDateString("pt-BR", {month:"long", year:"numeric"});
+  const dow = ["D","S","T","Q","Q","S","S"];
+
+  // map appointments counts by day
+  const countMap = {};
+  db.agenda.forEach(a=>{
+    const k = toISODate(a.dataISO);
+    countMap[k] = (countMap[k]||0)+1;
+  });
+
+  let cells = [];
+  // prev month fillers
+  const prevLast = new Date(year, month, 0).getDate();
+  for(let i=0;i<startDow;i++){
+    const dayNum = prevLast - (startDow-1-i);
+    const iso = toISODate(new Date(year, month-1, dayNum));
+    cells.push({label: dayNum, iso, muted:true});
+  }
+  // current month
+  for(let day=1; day<=totalDays; day++){
+    const iso = toISODate(new Date(year, month, day));
+    cells.push({label: day, iso, muted:false});
+  }
+  // next fillers to complete grid
+  while(cells.length % 7 !== 0){
+    const nextDay = cells.length - (startDow + totalDays) + 1;
+    const iso = toISODate(new Date(year, month+1, nextDay));
+    cells.push({label: nextDay, iso, muted:true});
+  }
+
+  return `
+    <div class="calWrap">
+      <div class="calHead">
+        <button class="btn secondary" onclick="calPrev()">◀</button>
+        <div style="font-weight:1000;text-transform:capitalize">${escapeHtml(monthName)}</div>
+        <button class="btn secondary" onclick="calNext()">▶</button>
+      </div>
+
+      <div class="calGrid">
+        ${dow.map(x=>`<div class="dow">${x}</div>`).join("")}
+        ${cells.map(c=>{
+          const sel = (c.iso===selectedDayISO) ? "selected" : "";
+          const aptN = countMap[c.iso] || 0;
+          return `
+            <div class="dayCell ${c.muted?"muted":""} ${sel}" onclick="selectDay('${c.iso}')">
+              <div class="dayNum">${c.label}</div>
+              ${aptN ? `<span class="badgeApt">${aptN} ag.</span>` : ``}
+            </div>
+          `;
+        }).join("")}
+      </div>
+
+      <div class="small">Selecionado: <b>${selectedDayISO}</b></div>
+    </div>
+  `;
+}
+
+function calPrev(){ monthCursor.setMonth(monthCursor.getMonth()-1); renderAgenda(); }
+function calNext(){ monthCursor.setMonth(monthCursor.getMonth()+1); renderAgenda(); }
+function selectDay(iso){ selectedDayISO = iso; renderAgenda(); }
+
+function addAgenda(){
+  const pid = document.getElementById("agPaciente").value;
+  if(!pid){ toast("Selecione um paciente.", false); return; }
+  const hora = document.getElementById("agHora").value || "";
+  const tipo = document.getElementById("agTipo").value;
+  const resumo = document.getElementById("agResumo").value.trim();
+
+  const isoDT = new Date(selectedDayISO + "T" + (hora||"08:00") + ":00").toISOString();
+
+  db.agenda.push({
+    id: uid(),
+    pacienteId: pid,
+    dataISO: isoDT,
+    hora,
+    tipo,
+    resumo
+  });
+  saveDB(db);
+  toast("Agendamento criado.");
+  renderAgenda();
+}
+
+function delAgenda(id){
+  db.agenda = db.agenda.filter(a=>a.id!==id);
+  saveDB(db);
+  toast("Agendamento removido.");
+  renderAgenda();
+}
+function openPatientFromAgenda(pid){
+  selectedPatientId = pid;
+  activeTab = "pacientes";
+  document.querySelectorAll(".tab").forEach(b=>{
+    b.classList.toggle("active", b.dataset.tab==="pacientes");
+  });
+  renderPacientes();
+}
+
+/* =========================
+   TAB: PACIENTES (CADASTRO + PRONTUÁRIO EVOLUTIVO)
+========================= */
+function renderPacientes(){
+  side.innerHTML = `
+    <div class="card">
+      <div class="title">👤 Pacientes</div>
+      <div class="hint">Cadastre e selecione para ver/adicionar evoluções.</div>
+
+      <label>Buscar</label>
+      <input id="pBusca" placeholder="Digite nome..." oninput="renderPacientes()" />
+
+      <div class="hr"></div>
+      <div class="title">➕ Novo paciente</div>
+
+      <label>Nome *</label>
+      <input id="pNome" placeholder="Nome completo" />
+
+      <div class="row">
+        <div>
+          <label>Nascimento</label>
+          <input id="pNasc" type="date" />
+        </div>
+        <div>
+          <label>Telefone</label>
+          <input id="pTel" placeholder="WhatsApp" />
+        </div>
+      </div>
+
+      <label>Observações</label>
+      <textarea id="pObs" placeholder="Alergias, comorbidades, etc."></textarea>
+
+      <button class="btn" onclick="addPaciente()">✅ Cadastrar</button>
+
+      <div class="hr"></div>
+      <div class="title">📌 Lista</div>
+      <div class="list" id="listaPacientes"></div>
+    </div>
+  `;
+
+  // lista
+  const q = (document.getElementById("pBusca")?.value || "").trim().toLowerCase();
+  const list = db.pacientes.slice().sort(byName).filter(p => !q || (p.nome||"").toLowerCase().includes(q));
+  const el = document.getElementById("listaPacientes");
+  el.innerHTML = list.length ? list.map(p=>{
+    const sel = (p.id===selectedPatientId);
+    return `
+      <div class="item" style="${sel?'border-color: rgba(26,109,204,.55)':''}">
+        <div class="top">
+          <div>
+            <strong>${escapeHtml(p.nome)}</strong>
+            <div class="small">${p.nasc ? "Nasc: "+fmtBRDate(p.nasc) : ""} ${p.telefone ? " • "+escapeHtml(p.telefone) : ""}</div>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end">
+            <button class="btn secondary" onclick="selectPaciente('${p.id}')">Abrir</button>
+            <button class="btn danger" onclick="delPaciente('${p.id}')">Excluir</button>
+          </div>
+        </div>
+        ${p.obs ? `<div class="meta">${escapeHtml(p.obs)}</div>` : ``}
+      </div>
+    `;
+  }).join("") : `<div class="hint">Nenhum paciente cadastrado.</div>`;
+
+  // main
+  if(!selectedPatientId && db.pacientes.length){
+    selectedPatientId = db.pacientes[0].id;
+  }
+
+  const p = selectedPatientId ? getPatient(selectedPatientId) : null;
+
+  if(!p){
+    main.innerHTML = `
+      <div class="card">
+        <div class="title">Selecione um paciente</div>
+        <div class="hint">Cadastre ou escolha um paciente na lista.</div>
+      </div>
+    `;
+    return;
+  }
+
+  const evs = getEvolucoes(p.id);
+
+  main.innerHTML = `
+    <div class="card">
+      <div class="title">📋 Prontuário • ${escapeHtml(p.nome)}</div>
+      <div class="hint">
+        Cada atendimento vira uma <b>nova evolução</b>. Isso garante histórico completo.
+      </div>
+
+      <div class="row">
+        <div class="card" style="margin:0">
+          <div class="title">🧾 Dados</div>
+          <div class="small"><b>Nascimento:</b> ${p.nasc ? fmtBRDate(p.nasc) : "—"}</div>
+          <div class="small"><b>Telefone:</b> ${p.telefone ? escapeHtml(p.telefone) : "—"}</div>
+          <div class="small"><b>Obs:</b> ${p.obs ? escapeHtml(p.obs) : "—"}</div>
+        </div>
+
+        <div class="card" style="margin:0">
+          <div class="title">⚡ Ações</div>
+          <button class="btn secondary" onclick="goAgendaToday('${p.id}')">📅 Agendar Hoje</button>
+          <button class="btn" onclick="openDocsForPatient('${p.id}')">📄 PDFs deste paciente</button>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="title">➕ Nova evolução</div>
+      ${renderEvolucaoForm(p.id)}
+
+      <div class="hr"></div>
+
+      <div class="title">🧠 Histórico de evoluções (${evs.length})</div>
+      <div class="list">
+        ${evs.length ? evs.map(e=>renderEvolucaoItem(e)).join("") : `<div class="hint">Sem evoluções ainda.</div>`}
+      </div>
+    </div>
+  `;
+}
+
+function addPaciente(){
+  const nome = document.getElementById("pNome").value.trim();
+  if(!nome){ toast("Nome é obrigatório.", false); return; }
+  
+  const paciente = {
+    id: uid(),
+    nome,
+    nasc: document.getElementById("pNasc").value || null,
+    telefone: document.getElementById("pTel").value.trim() || null,
+    obs: document.getElementById("pObs").value.trim() || null
+  };
+  
+  db.pacientes.push(paciente);
+  saveDB(db);
+  
+  // Limpar formulário
+  document.getElementById("pNome").value = "";
+  document.getElementById("pNasc").value = "";
+  document.getElementById("pTel").value = "";
+  document.getElementById("pObs").value = "";
+  
+  selectedPatientId = paciente.id;
+  toast("Paciente cadastrado.");
+  renderPacientes();
+}
+
+function selectPaciente(id){
+  selectedPatientId = id;
+  renderPacientes();
+}
+
+function delPaciente(id){
+  if(!confirm("Excluir paciente? Também serão excluídas TODAS as evoluções e agendamentos relacionados.")) return;
+  
+  // Remover paciente
+  db.pacientes = db.pacientes.filter(p=>p.id!==id);
+  // Remover evoluções do paciente
+  db.evolucoes = db.evolucoes.filter(e=>e.pacienteId!==id);
+  // Remover agendamentos do paciente
+  db.agenda = db.agenda.filter(a=>a.pacienteId!==id);
+  
+  saveDB(db);
+  
+  if(selectedPatientId === id){
+    selectedPatientId = db.pacientes.length ? db.pacientes[0].id : null;
+  }
+  
+  toast("Paciente excluído.");
+  renderPacientes();
+}
+
+function renderEvolucaoForm(pacienteId){
+  return `
+    <div class="card">
+      <div class="row">
+        <div>
+          <label>Data do atendimento</label>
+          <input id="evoData" type="date" value="${toISODate(new Date())}" />
+        </div>
+        <div>
+          <label>Tipo de atendimento</label>
+          <select id="evoTipo">
+            <option>Primeira Consulta</option>
+            <option selected>Retorno</option>
+            <option>Urgência</option>
+            <option>Reavaliação</option>
+            <option>Procedimento</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="title">SOAP</div>
+      <div class="row">
+        <div>
+          <label>S (Subjetivo)</label>
+          <textarea id="soapS" placeholder="Queixa principal, história..."></textarea>
+        </div>
+        <div>
+          <label>O (Objetivo)</label>
+          <textarea id="soapO" placeholder="Exame físico, achados..."></textarea>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>A (Avaliação)</label>
+          <textarea id="soapA" placeholder="Hipóteses diagnósticas..."></textarea>
+        </div>
+        <div>
+          <label>P (Plano)</label>
+          <textarea id="soapP" placeholder="Conduta, tratamento..."></textarea>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Odontograma (se aplicável)</label>
+          <textarea id="evOdonto" placeholder="Dentes acometidos, procedimentos..."></textarea>
+        </div>
+        <div>
+          <label>Exames solicitados</label>
+          <textarea id="evExames" placeholder="Rx, laboratoriais..."></textarea>
+        </div>
+      </div>
+
+      <label>Conduta / Prescrição</label>
+      <textarea id="evConduta" placeholder="Medicações, orientações..."></textarea>
+
+      <label>Anotações adicionais</label>
+      <textarea id="evAnotacoes" placeholder="Outras observações..."></textarea>
+
+      <button class="btn" onclick="addEvolucao('${pacienteId}')">✅ Salvar Evolução</button>
+    </div>
+  `;
+}
+
+function addEvolucao(pacienteId){
+  const evolucao = {
+    id: uid(),
+    pacienteId,
+    dataISO: new Date(document.getElementById("evoData").value + "T12:00:00").toISOString(),
+    tipoAtend: document.getElementById("evoTipo").value,
+    soapS: document.getElementById("soapS").value.trim() || null,
+    soapO: document.getElementById("soapO").value.trim() || null,
+    soapA: document.getElementById("soapA").value.trim() || null,
+    soapP: document.getElementById("soapP").value.trim() || null,
+    odonto: document.getElementById("evOdonto").value.trim() || null,
+    exames: document.getElementById("evExames").value.trim() || null,
+    conduta: document.getElementById("evConduta").value.trim() || null,
+    anotacoes: document.getElementById("evAnotacoes").value.trim() || null
+  };
+  
+  db.evolucoes.push(evolucao);
+  saveDB(db);
+  
+  // Limpar formulário
+  document.getElementById("soapS").value = "";
+  document.getElementById("soapO").value = "";
+  document.getElementById("soapA").value = "";
+  document.getElementById("soapP").value = "";
+  document.getElementById("evOdonto").value = "";
+  document.getElementById("evExames").value = "";
+  document.getElementById("evConduta").value = "";
+  document.getElementById("evAnotacoes").value = "";
+  
+  toast("Evolução salva.");
+  renderPacientes();
+}
+
+function renderEvolucaoItem(e){
+  const p = getPatient(e.pacienteId);
+  return `
+    <div class="item">
+      <div class="top">
+        <div>
+          <strong>${fmtBRDate(e.dataISO)} • ${escapeHtml(e.tipoAtend)}</strong>
+          <div class="small">ID: ${e.id.slice(-8)}</div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end">
+          <button class="btn secondary" onclick="editEvolucao('${e.id}')">Editar</button>
+          <button class="btn danger" onclick="delEvolucao('${e.id}')">Excluir</button>
+        </div>
+      </div>
+      
+      ${e.soapS ? `<div class="meta"><b>S:</b> ${escapeHtml(e.soapS)}</div>` : ''}
+      ${e.soapO ? `<div class="meta"><b>O:</b> ${escapeHtml(e.soapO)}</div>` : ''}
+      ${e.soapA ? `<div class="meta"><b>A:</b> ${escapeHtml(e.soapA)}</div>` : ''}
+      ${e.soapP ? `<div class="meta"><b>P:</b> ${escapeHtml(e.soapP)}</div>` : ''}
+      ${e.odonto ? `<div class="meta"><b>Odontograma:</b> ${escapeHtml(e.odonto)}</div>` : ''}
+      ${e.exames ? `<div class="meta"><b>Exames:</b> ${escapeHtml(e.exames)}</div>` : ''}
+      ${e.conduta ? `<div class="meta"><b>Conduta:</b> ${escapeHtml(e.conduta)}</div>` : ''}
+      ${e.anotacoes ? `<div class="meta"><b>Anotações:</b> ${escapeHtml(e.anotacoes)}</div>` : ''}
+    </div>
+  `;
+}
+
+function editEvolucao(id){
+  const e = db.evolucoes.find(ev=>ev.id===id);
+  if(!e) return;
+  
+  // Preencher formulário
+  document.getElementById("evoData").value = toISODate(e.dataISO);
+  document.getElementById("evoTipo").value = e.tipoAtend;
+  document.getElementById("soapS").value = e.soapS || "";
+  document.getElementById("soapO").value = e.soapO || "";
+  document.getElementById("soapA").value = e.soapA || "";
+  document.getElementById("soapP").value = e.soapP || "";
+  document.getElementById("evOdonto").value = e.odonto || "";
+  document.getElementById("evExames").value = e.exames || "";
+  document.getElementById("evConduta").value = e.conduta || "";
+  document.getElementById("evAnotacoes").value = e.anotacoes || "";
+  
+  // Alterar função do botão para atualizar
+  const btn = document.querySelector(`[onclick="addEvolucao('${e.pacienteId}')"]`);
+  btn.setAttribute("onclick", `updateEvolucao('${id}')`);
+  btn.textContent = "✏️ Atualizar Evolução";
+  
+  toast("Modo edição ativado.");
+}
+
+function updateEvolucao(id){
+  const eIndex = db.evolucoes.findIndex(ev=>ev.id===id);
+  if(eIndex === -1) return;
+  
+  db.evolucoes[eIndex] = {
+    ...db.evolucoes[eIndex],
+    dataISO: new Date(document.getElementById("evoData").value + "T12:00:00").toISOString(),
+    tipoAtend: document.getElementById("evoTipo").value,
+    soapS: document.getElementById("soapS").value.trim() || null,
+    soapO: document.getElementById("soapO").value.trim() || null,
+    soapA: document.getElementById("soapA").value.trim() || null,
+    soapP: document.getElementById("soapP").value.trim() || null,
+    odonto: document.getElementById("evOdonto").value.trim() || null,
+    exames: document.getElementById("evExames").value.trim() || null,
+    conduta: document.getElementById("evConduta").value.trim() || null,
+    anotacoes: document.getElementById("evAnotacoes").value.trim() || null
+  };
+  
+  saveDB(db);
+  
+  // Restaurar botão
+  const btn = document.querySelector(`[onclick="updateEvolucao('${id}')"]`);
+  btn.setAttribute("onclick", `addEvolucao('${db.evolucoes[eIndex].pacienteId}')`);
+  btn.textContent = "✅ Salvar Evolução";
+  
+  // Limpar formulário
+  document.getElementById("soapS").value = "";
+  document.getElementById("soapO").value = "";
+  document.getElementById("soapA").value = "";
+  document.getElementById("soapP").value = "";
+  document.getElementById("evOdonto").value = "";
+  document.getElementById("evExames").value = "";
+  document.getElementById("evConduta").value = "";
+  document.getElementById("evAnotacoes").value = "";
+  
+  toast("Evolução atualizada.");
+  renderPacientes();
+}
+
+function delEvolucao(id){
+  if(!confirm("Excluir esta evolução?")) return;
+  
+  db.evolucoes = db.evolucoes.filter(e=>e.id!==id);
+  saveDB(db);
+  toast("Evolução excluída.");
+  renderPacientes();
+}
+
+function goAgendaToday(pid){
+  selectedDayISO = toISODate(new Date());
+  activeTab = "agenda";
+  document.querySelectorAll(".tab").forEach(b=>{
+    b.classList.toggle("active", b.dataset.tab==="agenda");
+  });
+  
+  setTimeout(() => {
+    document.getElementById("agPaciente").value = pid;
+    renderAgenda();
+  }, 100);
+}
+
+function openDocsForPatient(pid){
+  selectedPatientId = pid;
+  activeTab = "docs";
+  document.querySelectorAll(".tab").forEach(b=>{
+    b.classList.toggle("active", b.dataset.tab==="docs");
+  });
+  renderDocs();
+}
+
+/* =========================
+   TAB: DOCS (GERAR PDF)
+========================= */
+function renderDocs(){
+  let patientSelectHtml = '<option value="">Todos os pacientes</option>';
+  db.pacientes.sort(byName).forEach(p => {
+    patientSelectHtml += `<option value="${p.id}" ${p.id===selectedPatientId?'selected':''}>${escapeHtml(p.nome)}</option>`;
+  });
+  
+  side.innerHTML = `
+    <div class="card">
+      <div class="title">📄 Gerar PDF</div>
+      <div class="hint">Selecione o tipo de documento e opções.</div>
+      
+      <label>Tipo de documento</label>
+      <select id="docType">
+        <option value="evolucao">📋 Evolução individual</option>
+        <option value="prontuario">🧾 Prontuário completo</option>
+        <option value="agenda">📅 Agenda do dia</option>
+        <option value="prescricao">💊 Prescrição/Receita</option>
+      </select>
+      
+      <label>Paciente</label>
+      <select id="docPatient" onchange="selectedPatientId=this.value; renderDocs()">
+        ${patientSelectHtml}
+      </select>
+      
+      <div id="docExtraOptions"></div>
+      
+      <button class="btn" onclick="generatePDF()">🖨️ Gerar PDF</button>
+      <button class="btn secondary" onclick="downloadPDF()" ${pdfURL?'':'disabled'}>⬇️ Baixar PDF</button>
+      
+      <div class="hr"></div>
+      <div class="hint">
+        O PDF será gerado com jsPDF e aparecerá ao lado →<br>
+        Clique em "Baixar PDF" para salvar no dispositivo.
+      </div>
+    </div>
+  `;
+  
+  // Render extra options based on doc type
+  const docType = document.getElementById("docType")?.value || "evolucao";
+  const extraOptions = document.getElementById("docExtraOptions");
+  
+  if(docType === "evolucao" && selectedPatientId){
+    const evs = getEvolucoes(selectedPatientId);
+    if(evs.length){
+      extraOptions.innerHTML = `
+        <label>Selecionar evolução</label>
+        <select id="docEvolucao">
+          ${evs.map(e=>`<option value="${e.id}">${fmtBRDate(e.dataISO)} - ${escapeHtml(e.tipoAtend)}</option>`).join("")}
+        </select>
+      `;
+    }
+  } else if(docType === "agenda"){
+    extraOptions.innerHTML = `
+      <label>Data da agenda</label>
+      <input id="docAgendaDate" type="date" value="${selectedDayISO}" />
+    `;
+  }
+  
+  // Main content - PDF preview
+  main.innerHTML = `
+    <div class="card">
+      <div class="title">📄 Visualização do PDF</div>
+      <div class="hint">O PDF será exibido aqui após clicar em "Gerar PDF".</div>
+      
+      <div class="pdfBox" id="pdfPreview">
+        ${pdfURL ? `<iframe src="${pdfURL}"></iframe>` : `
+          <div style="display:grid; place-items:center; height:100%; color:var(--muted);">
+            <div style="text-align:center; padding:40px;">
+              <div style="font-size:48px; margin-bottom:20px;">📄</div>
+              <div>Nenhum PDF gerado ainda.</div>
+              <div class="small">Clique em "Gerar PDF" ao lado.</div>
+            </div>
+          </div>
+        `}
+      </div>
+    </div>
+  `;
+}
+
+function generatePDF(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const prof = db.prof;
+  const docType = document.getElementById("docType").value;
+  const patientId = document.getElementById("docPatient").value;
+  const patient = getPatient(patientId);
+  
+  // Configurações da página
+  const margin = 20;
+  let y = margin;
+  const pageWidth = doc.internal.pageSize.width;
+  const pageHeight = doc.internal.pageSize.height;
+  
+  // Cabeçalho padrão
+  doc.setFontSize(20);
+  doc.setFont("helvetica", "bold");
+  doc.text("BTX • Prontuário + Agenda", pageWidth/2, y, {align: "center"});
+  y += 10;
+  
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text(`${prof.nome} • ${prof.categoria} • ${prof.registro}`, pageWidth/2, y, {align: "center"});
+  y += 8;
+  doc.text(`${prof.endereco} • ${prof.cidadeUF} • ${prof.contato}`, pageWidth/2, y, {align: "center"});
+  y += 15;
+  
+  doc.setDrawColor(200);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 10;
+  
+  if(docType === "evolucao" && patient){
+    const evolucaoId = document.getElementById("docEvolucao")?.value;
+    const ev = db.evolucoes.find(e => e.id === evolucaoId);
+    
+    if(ev){
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text("EVOLUÇÃO MÉDICA", margin, y);
+      y += 10;
+      
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Paciente: ${patient.nome}`, margin, y);
+      y += 6;
+      doc.text(`Data: ${fmtBRDate(ev.dataISO)} • Tipo: ${ev.tipoAtend}`, margin, y);
+      y += 10;
+      
+      // SOAP
+      const sections = [
+        {title: "S (SUBJETIVO)", content: ev.soapS},
+        {title: "O (OBJETIVO)", content: ev.soapO},
+        {title: "A (AVALIAÇÃO)", content: ev.soapA},
+        {title: "P (PLANO)", content: ev.soapP},
+        {title: "ODONTOGRAMA / ACHADOS", content: ev.odonto},
+        {title: "EXAMES SOLICITADOS", content: ev.exames},
+        {title: "CONDUTA / PRESCRIÇÃO", content: ev.conduta},
+        {title: "ANOTAÇÕES ADICIONAIS", content: ev.anotacoes}
+      ];
+      
+      sections.forEach(section => {
+        if(section.content){
+          doc.setFont("helvetica", "bold");
+          doc.text(`${section.title}:`, margin, y);
+          y += 6;
+          
+          doc.setFont("helvetica", "normal");
+          const lines = doc.splitTextToSize(section.content, pageWidth - 2*margin);
+          doc.text(lines, margin, y);
+          y += lines.length * 6 + 8;
+          
+          // Quebra de página
+          if(y > pageHeight - 30){
+            doc.addPage();
+            y = margin;
+          }
+        }
+      });
+    }
+  } else if(docType === "prontuario" && patient){
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("PRONTUÁRIO COMPLETO", margin, y);
+    y += 10;
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Paciente: ${patient.nome}`, margin, y);
+    y += 6;
+    if(patient.nasc) doc.text(`Nascimento: ${fmtBRDate(patient.nasc)}`, margin, y);
+    y += 6;
+    if(patient.telefone) doc.text(`Telefone: ${patient.telefone}`, margin, y);
+    y += 6;
+    if(patient.obs) doc.text(`Observações: ${patient.obs}`, margin, y);
+    y += 15;
+    
+    // Evoluções
+    const evs = getEvolucoes(patient.id);
+    evs.forEach((ev, idx) => {
+      doc.setFont("helvetica", "bold");
+      doc.text(`Evolução ${idx+1} - ${fmtBRDate(ev.dataISO)} • ${ev.tipoAtend}`, margin, y);
+      y += 8;
+      
+      const sections = [
+        {title: "S", content: ev.soapS},
+        {title: "O", content: ev.soapO},
+        {title: "A", content: ev.soapA},
+        {title: "P", content: ev.soapP}
+      ];
+      
+      sections.forEach(section => {
+        if(section.content){
+          doc.setFont("helvetica", "bold");
+          doc.text(`${section.title}:`, margin, y);
+          y += 6;
+          
+          doc.setFont("helvetica", "normal");
+          const lines = doc.splitTextToSize(section.content, pageWidth - 2*margin);
+          doc.text(lines, margin, y);
+          y += lines.length * 6 + 4;
+        }
+      });
+      
+      if(ev.conduta){
+        doc.setFont("helvetica", "bold");
+        doc.text("Conduta:", margin, y);
+        y += 6;
         
-        // ✅ CORREÇÃO 2: Agenda mostrando compromissos
-        function renderCalendar(action = '') {
-            if(action === 'next') currentWeekOffset++;
-            if(action === 'today') currentWeekOffset = 0;
-            const today = new Date();
-            const startDate = new Date(today);
-            startDate.setDate(today.getDate() + (currentWeekOffset * 7) - today.getDay());
-            const days = [];
-            for(let i = 0; i < 7; i++) {
-                const date = new Date(startDate);
-                date.setDate(startDate.getDate() + i);
-                days.push(date);
-            }
-
-            const doctorFilter = document.getElementById('filterDoctor').value;
-            const filteredApps = appointments.filter(a => !doctorFilter || a.paciente.includes(doctorFilter));
-
-            const calendarHTML = days.map(day => {
-                const dayStr = day.toISOString().split('T')[0];
-                const dayApps = filteredApps.filter(a => a.data === dayStr);
-                return `
-                    <div class="calendar-day">
-                        <div class="day-header">${day.toLocaleDateString('pt-BR', {weekday: 'short', day: 'numeric', month: 'short'})}</div>
-                        ${dayApps.map(app => `
-                            <div class="appointment ${app.tipo === 'Urgência' ? 'urgent' : ''}">
-                                <strong>${app.paciente}</strong><br>
-                                <small>${app.tipo}</small><br>
-                                <small>${app.hora}h</small>
-                            </div>
-                        `).join('')}
-                        ${dayApps.length === 0 ? '<small style="color:#888;">Sem agendamentos</small>' : ''}
-                    </div>
-                `;
-            }).join('');
-
-            document.getElementById('calendarContainer').innerHTML = calendarHTML;
+        doc.setFont("helvetica", "normal");
+        const lines = doc.splitTextToSize(ev.conduta, pageWidth - 2*margin);
+        doc.text(lines, margin, y);
+        y += lines.length * 6 + 4;
+      }
+      
+      y += 10;
+      
+      // Quebra de página
+      if(y > pageHeight - 30){
+        doc.addPage();
+        y = margin;
+      }
+    });
+  } else if(docType === "agenda"){
+    const agendaDate = document.getElementById("docAgendaDate")?.value || selectedDayISO;
+    const apts = getAgendaByDay(agendaDate);
+    
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("AGENDA DO DIA", margin, y);
+    y += 10;
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Data: ${fmtBRDate(agendaDate)}`, margin, y);
+    y += 15;
+    
+    if(apts.length){
+      apts.forEach((apt, idx) => {
+        const p = getPatient(apt.pacienteId);
+        
+        doc.setFont("helvetica", "bold");
+        doc.text(`${apt.hora || "--:--"} • ${apt.tipo}`, margin, y);
+        y += 6;
+        
+        doc.setFont("helvetica", "normal");
+        doc.text(`Paciente: ${p ? p.nome : "Paciente removido"}`, margin + 10, y);
+        y += 6;
+        
+        if(apt.resumo){
+          const lines = doc.splitTextToSize(`Resumo: ${apt.resumo}`, pageWidth - 2*margin - 10);
+          doc.text(lines, margin + 10, y);
+          y += lines.length * 6 + 4;
         }
-
-        function updateDoctorFilter() {
-            const uniqueDoctors = [...new Set(appointments.map(a => a.paciente))];
-            const select = document.getElementById('filterDoctor');
-            select.innerHTML = '<option value="">Filtrar por Profissional</option>' +
-                uniqueDoctors.map(d => `<option value="${d}">${d}</option>`).join('');
+        
+        y += 10;
+        
+        // Quebra de página
+        if(y > pageHeight - 30){
+          doc.addPage();
+          y = margin;
         }
+      });
+    } else {
+      doc.text("Sem agendamentos para este dia.", margin, y);
+    }
+  } else if(docType === "prescricao" && patient){
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("PRESCRIÇÃO MÉDICA", margin, y);
+    y += 10;
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Paciente: ${patient.nome}`, margin, y);
+    y += 6;
+    if(patient.nasc) doc.text(`Nascimento: ${fmtBRDate(patient.nasc)}`, margin, y);
+    y += 6;
+    doc.text(`Data: ${fmtBRDate(new Date())}`, margin, y);
+    y += 15;
+    
+    doc.setFont("helvetica", "bold");
+    doc.text("________________________________________________________________________________", margin, y);
+    y += 20;
+    
+    doc.setFont("helvetica", "normal");
+    doc.text("Medicação / Procedimento", margin, y);
+    y += 15;
+    doc.text("________________________________________________________________________________", margin, y);
+    y += 20;
+    doc.text("Assinatura:", margin, y);
+    y += 20;
+    doc.text("________________________________________________", margin, y);
+    y += 10;
+    doc.text(`${prof.nome}`, margin, y);
+    y += 6;
+    doc.text(`${prof.categoria} • ${prof.registro}`, margin, y);
+  }
+  
+  // Rodapé
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "italic");
+  const footerText = `Gerado em ${fmtBRDateTime(new Date())} • BTX Prontuário + Agenda • Página ${doc.internal.getNumberOfPages()}`;
+  doc.text(footerText, pageWidth/2, pageHeight - 10, {align: "center"});
+  
+  // Gerar URL para preview
+  pdfURL = doc.output('bloburl');
+  
+  // Atualizar preview
+  const preview = document.getElementById("pdfPreview");
+  preview.innerHTML = `<iframe src="${pdfURL}"></iframe>`;
+  
+  // Habilitar botão de download
+  document.querySelector('[onclick="downloadPDF()"]').disabled = false;
+  
+  toast("PDF gerado com sucesso!");
+}
 
-        // ==================== RECEITA ====================
-        // ✅ CORREÇÃO 3: PDF aparece + sem duplicação
-        let isProcessingReceita = false;
-        document.getElementById('formReceita').onsubmit = (e) => {
-            e.preventDefault();
-            
-            if(isProcessingReceita) return false;
-            isProcessingReceita = true;
-            
-            const doc = document.getElementById('documentoReceita');
-            document.getElementById('receitaProfissionalInfo').textContent = `${localStorage.getItem('profNome') || '[Configure os dados]'} | ${localStorage.getItem('profEspecialidade') || ''}`;
-            document.getElementById('receitaEnderecoInfo').textContent = localStorage.getItem('profEndereco') || '';
-            document.getElementById('receitaAssinatura').textContent = localStorage.getItem('profNome') || '[Assinatura do Médico]';
-            document.getElementById('docReceitaPaciente').textContent = document.getElementById('receitaPaciente').value;
-            document.getElementById('docReceitaData').textContent = new Date().toLocaleDateString('pt-BR');
-            document.getElementById('docReceitaMedicamentos').textContent = document.getElementById('receitaMedicamentos').value;
-            document.getElementById('docReceitaObservacoes').textContent = document.getElementById('receitaObservacoes').value || 'Nenhuma observação adicional.';
-            doc.classList.remove('hidden');
-            doc.scrollIntoView({behavior: 'smooth'});
-            
-            setTimeout(() => { isProcessingReceita = false; }, 1000);
-            return false;
-        };
+function downloadPDF(){
+  if(!pdfURL) return;
+  
+  const link = document.createElement('a');
+  link.href = pdfURL;
+  link.download = `btx-documento-${new Date().toISOString().slice(0,10)}.pdf`;
+  link.click();
+}
 
-        // ==================== ATESTADO ====================
-        // ✅ CORREÇÃO 4: PDF aparece + sem duplicação
-        let isProcessingAtestado = false;
-        document.getElementById('formAtestado').onsubmit = (e) => {
-            e.preventDefault();
-            
-            if(isProcessingAtestado) return false;
-            isProcessingAtestado = true;
-            
-            const doc = document.getElementById('documentoAtestado');
-            document.getElementById('atestadoProfissionalInfo').textContent = `${localStorage.getItem('profNome') || '[Configure os dados]'} | ${localStorage.getItem('profEspecialidade') || ''}`;
-            document.getElementById('atestadoEnderecoInfo').textContent = localStorage.getItem('profEndereco') || '';
-            document.getElementById('atestadoAssinatura').textContent = localStorage.getItem('profNome') || '[Assinatura do Médico]';
-            document.getElementById('docAtestadoPaciente').textContent = document.getElementById('atestadoPaciente').value;
-            document.getElementById('docAtestadoData').textContent = new Date().toLocaleDateString('pt-BR');
-            document.getElementById('docAtestadoTexto').textContent = document.getElementById('atestadoTexto').value;
-            document.getElementById('docAtestadoValidade').textContent = document.getElementById('atestadoValidade').value || 'A critério do paciente.';
-            doc.classList.remove('hidden');
-            doc.scrollIntoView({behavior: 'smooth'});
-            
-            setTimeout(() => { isProcessingAtestado = false; }, 1000);
-            return false;
-        };
-
-        // ==================== INICIALIZAÇÃO ====================
-        window.onload = () => {
-            updateDoctorFilter();
-            renderCalendar();
-            renderPatientHistory();
-        };
-    </script>
+/* =========================
+   INICIALIZAÇÃO
+========================= */
+// Inicializar ao carregar
+window.onload = function() {
+  ensureDB();
+  render();
+};
+</script>
 </body>
 </html>
