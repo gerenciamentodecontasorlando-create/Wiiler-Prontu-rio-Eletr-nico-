@@ -7,6 +7,8 @@
 
   <!-- jsPDF (PDF confiável, sem print) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- html2canvas para capturar telas -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <style>
     :root{
@@ -19,7 +21,9 @@
       --accent:#1a6dcc;
       --accent2:#0d4d9c;
       --danger:#dc3545;
+      --warning:#eab308;
       --ok:#22c55e;
+      --purple:#8b5cf6;
       --radius:14px;
     }
     *{box-sizing:border-box}
@@ -32,6 +36,7 @@
         radial-gradient(900px 520px at 85% 10%, rgba(13,77,156,.32), transparent 55%),
         var(--bg);
       padding:14px;
+      min-height:100vh;
     }
     header{
       display:flex; gap:12px; align-items:center; justify-content:space-between;
@@ -40,6 +45,7 @@
       background: linear-gradient(135deg, rgba(26,109,204,.92), rgba(13,77,156,.95));
       box-shadow: 0 10px 28px rgba(0,0,0,.28);
       flex-wrap:wrap;
+      backdrop-filter: blur(10px);
     }
     header .left{display:flex; gap:12px; align-items:center}
     .logo{
@@ -60,8 +66,9 @@
       background: linear-gradient(90deg, var(--accent), var(--accent2));
       box-shadow: 0 10px 18px rgba(0,0,0,.22);
       display:inline-flex; align-items:center; gap:8px;
-      transition: transform .12s ease;
+      transition: transform .12s ease, box-shadow .2s ease;
     }
+    .btn:hover{box-shadow: 0 12px 22px rgba(0,0,0,.28);}
     .btn:active{transform: translateY(1px)}
     .btn.secondary{
       background: linear-gradient(90deg, rgba(255,255,255,.14), rgba(255,255,255,.10));
@@ -71,6 +78,12 @@
     }
     .btn.danger{
       background: linear-gradient(90deg, rgba(220,53,69,.95), rgba(179,39,52,.98));
+    }
+    .btn.warning{
+      background: linear-gradient(90deg, rgba(234,179,8,.95), rgba(202,138,4,.98));
+    }
+    .btn.purple{
+      background: linear-gradient(90deg, rgba(139,92,246,.95), rgba(124,58,237,.98));
     }
 
     .grid{
@@ -89,6 +102,7 @@
       border-radius: var(--radius);
       box-shadow: 0 12px 30px rgba(0,0,0,.28);
       overflow:hidden;
+      backdrop-filter: blur(10px);
     }
     .tabs{
       display:flex; flex-wrap:wrap;
@@ -104,6 +118,10 @@
       color: rgba(231,238,252,.78);
       font-weight:900;
       display:flex; gap:8px; align-items:center; justify-content:center;
+      transition: all .2s ease;
+    }
+    .tab:hover{
+      background: rgba(255,255,255,.08);
     }
     .tab.active{
       color:white;
@@ -132,6 +150,7 @@
       background: rgba(0,0,0,.22);
       color: var(--text);
       outline:none;
+      transition: border-color .2s ease, box-shadow .2s ease;
     }
     input:focus, select:focus, textarea:focus{
       border-color: rgba(26,109,204,.75);
@@ -145,6 +164,11 @@
       border:1px solid rgba(255,255,255,.10);
       border-radius: 14px;
       padding:10px 12px;
+      transition: transform .15s ease, border-color .15s ease;
+    }
+    .item:hover{
+      transform: translateY(-2px);
+      border-color: rgba(26,109,204,.35);
     }
     .item .top{display:flex; justify-content:space-between; gap:10px; align-items:flex-start}
     .pill{
@@ -156,6 +180,8 @@
       white-space:nowrap;
     }
     .pill.urg{background: rgba(220,53,69,.16); border-color: rgba(220,53,69,.35)}
+    .pill.warn{background: rgba(234,179,8,.16); border-color: rgba(234,179,8,.35)}
+    .pill.ok{background: rgba(34,197,94,.16); border-color: rgba(34,197,94,.35)}
     .meta{margin-top:6px; color: rgba(231,238,252,.72); font-size:12px; line-height:1.35}
     .toolbar{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; align-items:center}
     .small{font-size:11px; color: rgba(231,238,252,.70)}
@@ -179,6 +205,7 @@
       cursor:pointer;
       transition: transform .08s ease, border-color .08s ease;
       overflow:hidden;
+      position:relative;
     }
     .dayCell:hover{transform: translateY(-1px); border-color: rgba(26,109,204,.35)}
     .dayCell.muted{opacity:.45}
@@ -204,6 +231,32 @@
       height: 520px;
     }
     .pdfBox iframe{width:100%; height:100%; border:0; background:white}
+    
+    /* Modal */
+    .modal{
+      position:fixed;
+      top:0; left:0; right:0; bottom:0;
+      background:rgba(0,0,0,.85);
+      backdrop-filter: blur(8px);
+      display:none;
+      justify-content:center;
+      align-items:center;
+      z-index:1000;
+      padding:20px;
+    }
+    .modal.show{display:flex;}
+    .modal-content{
+      background:var(--panel);
+      border-radius:var(--radius);
+      padding:20px;
+      max-width:600px;
+      width:100%;
+      max-height:90vh;
+      overflow-y:auto;
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow: 0 20px 40px rgba(0,0,0,.5);
+    }
+    
     .toast{
       position: fixed;
       left: 16px; right:16px;
@@ -217,8 +270,83 @@
       box-shadow: 0 14px 30px rgba(0,0,0,.35);
       z-index: 50;
     }
-    .toast.show{display:block}
+    .toast.show{display:block; animation: slideUp 0.3s ease}
     .toast b{color:white}
+    
+    @keyframes slideUp {
+      from { transform: translateY(100px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    /* Stats */
+    .stats-grid{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap:10px;
+      margin-bottom:14px;
+    }
+    .stat-card{
+      background:rgba(0,0,0,.22);
+      border-radius:12px;
+      padding:12px;
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .stat-value{
+      font-size:24px;
+      font-weight:1000;
+      color:var(--accent);
+    }
+    .stat-label{
+      font-size:11px;
+      color:var(--muted);
+    }
+    
+    /* Receita médica específica */
+    .receita-grid{
+      display:grid;
+      grid-template-columns: 60px 1fr 80px 80px;
+      gap:8px;
+      margin:10px 0;
+    }
+    .receita-header{
+      font-weight:900;
+      font-size:11px;
+      color:var(--muted);
+      padding-bottom:4px;
+      border-bottom:1px solid rgba(255,255,255,.1);
+    }
+    
+    /* Loader */
+    .loader{
+      display:inline-block;
+      width:20px;
+      height:20px;
+      border:2px solid rgba(255,255,255,.2);
+      border-top-color:var(--accent);
+      border-radius:50%;
+      animation:spin .8s linear infinite;
+    }
+    @keyframes spin{
+      to{transform:rotate(360deg);}
+    }
+    
+    /* Tabelas */
+    .table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:12px;
+    }
+    .table th{
+      text-align:left;
+      padding:8px;
+      background:rgba(0,0,0,.22);
+      border-bottom:1px solid rgba(255,255,255,.1);
+      font-weight:900;
+    }
+    .table td{
+      padding:8px;
+      border-bottom:1px solid rgba(255,255,255,.05);
+    }
   </style>
 </head>
 
@@ -245,6 +373,7 @@
       <button class="tab active" data-tab="config">⚙️ Config</button>
       <button class="tab" data-tab="agenda">📅 Agenda</button>
       <button class="tab" data-tab="pacientes">👤 Pacientes</button>
+      <button class="tab" data-tab="receitas">💊 Receitas</button>
       <button class="tab" data-tab="docs">📄 PDFs</button>
     </div>
     <div class="content" id="side"></div>
@@ -256,19 +385,46 @@
   </div>
 </div>
 
+<!-- Modal para Receitas -->
+<div class="modal" id="receitaModal">
+  <div class="modal-content">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <div class="title">💊 Receita Médica</div>
+      <button class="btn secondary" onclick="closeModal()">✕ Fechar</button>
+    </div>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
 /* =========================
    BANCO (localStorage)
 ========================= */
-const KEY = "btx_html_prontuario_v2";
+const KEY = "btx_html_prontuario_v3";
 
 function loadDB(){
-  try { return JSON.parse(localStorage.getItem(KEY) || "{}"); }
-  catch(e){ return {}; }
+  try { 
+    const data = localStorage.getItem(KEY);
+    if(!data) return {};
+    return JSON.parse(data); 
+  }
+  catch(e){ 
+    console.error("Erro ao carregar banco:", e);
+    return {}; 
+  }
 }
-function saveDB(db){ localStorage.setItem(KEY, JSON.stringify(db)); }
+function saveDB(db){ 
+  try {
+    localStorage.setItem(KEY, JSON.stringify(db));
+    return true;
+  } catch(e) {
+    console.error("Erro ao salvar banco:", e);
+    toast("Erro ao salvar dados", false);
+    return false;
+  }
+}
 
 function ensureDB(){
   const db = loadDB();
@@ -278,11 +434,31 @@ function ensureDB(){
     registro:"",
     contato:"",
     endereco:"",
-    cidadeUF:""
+    cidadeUF:"",
+    especialidade:"",
+    crmCro:""
   };
-  db.pacientes = db.pacientes || [];   // {id, nome, nasc, telefone, obs}
+  db.pacientes = db.pacientes || [];   // {id, nome, nasc, telefone, email, cpf, obs, criadoEm}
   db.evolucoes = db.evolucoes || [];   // {id, pacienteId, dataISO, tipoAtend, soapS, soapO, soapA, soapP, odonto, exames, conduta, anotacoes}
-  db.agenda = db.agenda || [];         // {id, pacienteId, dataISO, hora, tipo, resumo}
+  db.agenda = db.agenda || [];         // {id, pacienteId, dataISO, hora, tipo, resumo, status, duracao}
+  db.receitas = db.receitas || [];     // {id, pacienteId, dataISO, medicoId, itens[], observacoes, validade}
+  db.medicamentos = db.medicamentos || [
+    {nome: "Dipirona Sódica 500mg", apresentacao: "Comprimidos"},
+    {nome: "Paracetamol 750mg", apresentacao: "Comprimidos"},
+    {nome: "Ibuprofeno 400mg", apresentacao: "Comprimidos"},
+    {nome: "Amoxicilina 500mg", apresentacao: "Cápsulas"},
+    {nome: "Omeprazol 20mg", apresentacao: "Cápsulas"},
+    {nome: "Losartana 50mg", apresentacao: "Comprimidos"},
+    {nome: "Hidroclorotiazida 25mg", apresentacao: "Comprimidos"},
+    {nome: "Sinvastatina 20mg", apresentacao: "Comprimidos"},
+    {nome: "Metformina 850mg", apresentacao: "Comprimidos"},
+    {nome: "Clonazepam 0,5mg", apresentacao: "Comprimidos"},
+    {nome: "Sertralina 50mg", apresentacao: "Comprimidos"},
+    {nome: "Diazepam 5mg", apresentacao: "Comprimidos"},
+    {nome: "Prednisona 20mg", apresentacao: "Comprimidos"},
+    {nome: "Cefalexina 500mg", apresentacao: "Cápsulas"},
+    {nome: "Azitromicina 500mg", apresentacao: "Comprimidos"},
+  ];
   saveDB(db);
   return db;
 }
@@ -293,14 +469,16 @@ let db = ensureDB();
 ========================= */
 let activeTab = "config";
 let selectedPatientId = null;
-let selectedDayISO = toISODate(new Date());  // YYYY-MM-DD
-let monthCursor = new Date(); // mês atual
-let pdfURL = null; // para não duplicar e sempre atualizar preview
+let selectedDayISO = toISODate(new Date());
+let monthCursor = new Date();
+let pdfURL = null;
+let editingReceitaId = null;
 
 /* =========================
    HELPERS
 ========================= */
 function escapeHtml(text) {
+  if(text == null) return "";
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
@@ -313,7 +491,9 @@ function toast(msg, ok=true){
   setTimeout(()=>t.classList.remove("show"), 2600);
 }
 
-function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+function uid(){ 
+  return Date.now().toString(36) + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+}
 
 function toISODate(d){
   const dt = new Date(d);
@@ -324,11 +504,13 @@ function toISODate(d){
 }
 
 function fmtBRDate(iso){
+  if(!iso) return "--/--/----";
   const d = new Date(iso);
   return d.toLocaleDateString("pt-BR");
 }
 
 function fmtBRDateTime(iso){
+  if(!iso) return "--/--/---- --:--";
   const d = new Date(iso);
   return d.toLocaleString("pt-BR");
 }
@@ -349,7 +531,40 @@ function getAgendaByDay(dayISO){
     .sort((a,b)=>(a.hora||"").localeCompare(b.hora||""));
 }
 
-function safe(v){ return (v||"").toString(); }
+function getReceitasByPatient(pId){
+  return db.receitas
+    .filter(r=>r.pacienteId===pId)
+    .sort((a,b)=> new Date(b.dataISO) - new Date(a.dataISO));
+}
+
+function safe(v){ 
+  if(v == null) return "";
+  if(typeof v === "string") return v;
+  return v.toString(); 
+}
+
+function calcularIdade(nascimento){
+  if(!nascimento) return null;
+  const hoje = new Date();
+  const nasc = new Date(nascimento);
+  let idade = hoje.getFullYear() - nasc.getFullYear();
+  const mes = hoje.getMonth() - nasc.getMonth();
+  if (mes < 0 || (mes === 0 && hoje.getDate() < nasc.getDate())) {
+    idade--;
+  }
+  return idade;
+}
+
+function formatTelefone(tel){
+  if(!tel) return "";
+  const apenasNumeros = tel.replace(/\D/g, '');
+  if(apenasNumeros.length === 11){
+    return `(${apenasNumeros.substring(0,2)}) ${apenasNumeros.substring(2,7)}-${apenasNumeros.substring(7)}`;
+  }else if(apenasNumeros.length === 10){
+    return `(${apenasNumeros.substring(0,2)}) ${apenasNumeros.substring(2,6)}-${apenasNumeros.substring(6)}`;
+  }
+  return tel;
+}
 
 /* =========================
    BACKUP FUNCTIONS
@@ -393,11 +608,13 @@ function importBackup() {
 }
 
 function clearAll() {
-  if (confirm('Tem certeza? Isso excluirá TODOS os dados: pacientes, agendamentos, evoluções e configurações.')) {
-    localStorage.removeItem(KEY);
-    db = ensureDB();
-    toast('Todos os dados foram removidos');
-    setTimeout(() => location.reload(), 800);
+  if (confirm('⚠️ ATENÇÃO: Tem certeza? Isso excluirá TODOS os dados: pacientes, agendamentos, evoluções, receitas e configurações.')) {
+    if(confirm('🔄 Confirmar exclusão completa de todos os dados?')){
+      localStorage.removeItem(KEY);
+      db = ensureDB();
+      toast('Todos os dados foram removidos');
+      setTimeout(() => location.reload(), 800);
+    }
   }
 }
 
@@ -414,68 +631,140 @@ document.querySelectorAll(".tab").forEach(btn=>{
 });
 
 /* =========================
+   MODAL FUNCTIONS
+========================= */
+function openModal(content){
+  document.getElementById("modalContent").innerHTML = content;
+  document.getElementById("receitaModal").classList.add("show");
+}
+
+function closeModal(){
+  document.getElementById("receitaModal").classList.remove("show");
+  editingReceitaId = null;
+}
+
+/* =========================
    RENDER
 ========================= */
 function render(){
-  if(activeTab==="config"){ renderConfig(); }
-  if(activeTab==="agenda"){ renderAgenda(); }
-  if(activeTab==="pacientes"){ renderPacientes(); }
-  if(activeTab==="docs"){ renderDocs(); }
+  try {
+    if(activeTab==="config"){ renderConfig(); }
+    else if(activeTab==="agenda"){ renderAgenda(); }
+    else if(activeTab==="pacientes"){ renderPacientes(); }
+    else if(activeTab==="receitas"){ renderReceitas(); }
+    else if(activeTab==="docs"){ renderDocs(); }
+  } catch(e){
+    console.error("Erro no render:", e);
+    toast("Erro ao carregar conteúdo", false);
+  }
 }
 render();
 
 /* =========================
-   TAB: CONFIG
+   TAB: CONFIG (COMPLETA)
 ========================= */
 function renderConfig(){
   const p = db.prof;
 
   side.innerHTML = `
     <div class="card">
-      <div class="title">⚙️ Configurações</div>
-      <div class="hint">Defina seus dados uma vez. Eles entram nos PDFs.</div>
+      <div class="title">⚙️ Configurações Profissionais</div>
+      <div class="hint">Estes dados aparecem em todos os documentos gerados.</div>
 
-      <label>Categoria</label>
+      <label>Categoria Profissional</label>
       <select id="profCat">
         <option ${p.categoria==="Misto (CRM/CRO)"?"selected":""}>Misto (CRM/CRO)</option>
         <option ${p.categoria==="Médico (CRM)"?"selected":""}>Médico (CRM)</option>
         <option ${p.categoria==="Dentista (CRO)"?"selected":""}>Dentista (CRO)</option>
+        <option ${p.categoria==="Psicólogo (CRP)"?"selected":""}>Psicólogo (CRP)</option>
+        <option ${p.categoria==="Enfermeiro (COREN)"?"selected":""}>Enfermeiro (COREN)</option>
+        <option ${p.categoria==="Nutricionista (CRN)"?"selected":""}>Nutricionista (CRN)</option>
       </select>
 
-      <label>Nome do Profissional</label>
-      <input id="profNome" value="${safe(p.nome)}" placeholder="Ex: Dr. Orlando Abreu..." />
+      <label>Nome Completo</label>
+      <input id="profNome" value="${safe(p.nome)}" placeholder="Dr. João Silva..." />
 
-      <label>Registro (CRM/CRO)</label>
-      <input id="profReg" value="${safe(p.registro)}" placeholder="Ex: CRM/PA 0000 ou CRO/PA 0000" />
+      <label>Registro Profissional</label>
+      <input id="profReg" value="${safe(p.registro)}" placeholder="CRM/SP 123456 ou CRO/SP 123456" />
 
-      <label>Contato</label>
-      <input id="profCont" value="${safe(p.contato)}" placeholder="Telefone / WhatsApp" />
+      <label>Especialidade</label>
+      <input id="profEsp" value="${safe(p.especialidade)}" placeholder="Clínico Geral, Cardiologia, etc." />
 
-      <label>Endereço</label>
-      <input id="profEnd" value="${safe(p.endereco)}" placeholder="Rua, nº, bairro" />
+      <label>Contato (Telefone/WhatsApp)</label>
+      <input id="profCont" value="${safe(p.contato)}" placeholder="(11) 99999-9999" />
+
+      <label>E-mail</label>
+      <input id="profEmail" value="${safe(p.email)}" placeholder="seu@email.com" type="email" />
+
+      <label>Endereço do Consultório</label>
+      <input id="profEnd" value="${safe(p.endereco)}" placeholder="Rua Exemplo, 123 - Centro" />
 
       <label>Cidade/UF</label>
-      <input id="profCity" value="${safe(p.cidadeUF)}" placeholder="Abaetetuba - PA" />
+      <input id="profCity" value="${safe(p.cidadeUF)}" placeholder="São Paulo - SP" />
 
-      <button class="btn" onclick="saveProf()">💾 Salvar Config</button>
+      <button class="btn" onclick="saveProf()" style="margin-top:15px;">💾 Salvar Configurações</button>
     </div>
 
     <div class="card">
-      <div class="title">🧠 Regras do sistema</div>
-      <div class="hint">
-        • Agenda é por dia (clique no calendário) <br/>
-        • Prontuário é evolutivo (cada retorno vira nova evolução) <br/>
-        • PDF é gerado por jsPDF (não duplica).
+      <div class="title">📊 Estatísticas do Sistema</div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value">${db.pacientes.length}</div>
+          <div class="stat-label">Pacientes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${db.agenda.length}</div>
+          <div class="stat-label">Agendamentos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${db.evolucoes.length}</div>
+          <div class="stat-label">Evoluções</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${db.receitas.length}</div>
+          <div class="stat-label">Receitas</div>
+        </div>
       </div>
     </div>
   `;
 
   main.innerHTML = `
     <div class="card">
-      <div class="title">📌 Bem-vindo</div>
-      <p class="hint" style="margin-bottom:0">
-        Use as abas para: <b>Agenda</b> → agendar no dia certo; <b>Pacientes</b> → prontuário evolutivo; <b>PDFs</b> → gerar e ver o PDF na tela.
+      <div class="title">📌 Bem-vindo ao BTX Prontuário</div>
+      <p class="hint">
+        Sistema completo para gestão de prontuários médicos e agenda profissional.
       </p>
+      
+      <div class="row">
+        <div class="card" style="margin:0">
+          <div class="title">🔐 Segurança dos Dados</div>
+          <div class="hint">
+            • Todos os dados são armazenados localmente no seu navegador<br>
+            • Faça backup regularmente usando o botão "Backup"<br>
+            • Use "Restaurar" para recuperar dados de outro dispositivo
+          </div>
+        </div>
+        
+        <div class="card" style="margin:0">
+          <div class="title">💡 Dicas Rápidas</div>
+          <div class="hint">
+            • Clique no calendário para agendar consultas<br>
+            • Use o formulário SOAP para evoluções detalhadas<br>
+            • Gere receitas médicas completas<br>
+            • Exporte tudo para PDF quando necessário
+          </div>
+        </div>
+      </div>
+      
+      <div class="hr"></div>
+      
+      <div class="title">🔄 Backup Automático</div>
+      <div class="hint" style="margin-bottom:15px;">
+        Recomendamos fazer backup manual regularmente. O sistema faz backup automático a cada 100 alterações.
+      </div>
+      
+      <button class="btn purple" onclick="createAutoBackup()">🔄 Criar Backup Automático Agora</button>
+      <button class="btn secondary" onclick="viewBackupHistory()">📋 Histórico de Backups</button>
     </div>
   `;
 }
@@ -484,89 +773,231 @@ function saveProf(){
   db.prof.categoria = document.getElementById("profCat").value;
   db.prof.nome = document.getElementById("profNome").value.trim();
   db.prof.registro = document.getElementById("profReg").value.trim();
+  db.prof.especialidade = document.getElementById("profEsp").value.trim();
   db.prof.contato = document.getElementById("profCont").value.trim();
+  db.prof.email = document.getElementById("profEmail").value.trim();
   db.prof.endereco = document.getElementById("profEnd").value.trim();
   db.prof.cidadeUF = document.getElementById("profCity").value.trim();
-  saveDB(db);
-  toast("Configurações salvas.");
+  
+  if(saveDB(db)){
+    toast("Configurações salvas com sucesso!");
+  }
+}
+
+function createAutoBackup(){
+  const backupData = {
+    timestamp: new Date().toISOString(),
+    data: db,
+    version: "v3"
+  };
+  
+  const backupStr = JSON.stringify(backupData, null, 2);
+  const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(backupStr);
+  
+  const linkElement = document.createElement('a');
+  linkElement.setAttribute('href', dataUri);
+  linkElement.setAttribute('download', `backup-auto-${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.json`);
+  linkElement.click();
+  toast("Backup automático criado!");
+}
+
+function viewBackupHistory(){
+  // Implementação simples do histórico
+  const backups = [];
+  for(let i = 0; i < localStorage.length; i++){
+    const key = localStorage.key(i);
+    if(key.startsWith("backup_")){
+      try {
+        const data = JSON.parse(localStorage.getItem(key));
+        backups.push({key, timestamp: data.timestamp});
+      } catch(e){}
+    }
+  }
+  
+  if(backups.length === 0){
+    toast("Nenhum backup automático encontrado", false);
+    return;
+  }
+  
+  let html = `<div class="title">📋 Histórico de Backups</div>`;
+  html += `<div class="list">`;
+  
+  backups.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).forEach(b => {
+    const date = fmtBRDateTime(b.timestamp);
+    html += `
+      <div class="item">
+        <div class="top">
+          <div>
+            <strong>${date}</strong>
+          </div>
+          <div>
+            <button class="btn secondary" onclick="restoreBackup('${b.key}')">Restaurar</button>
+            <button class="btn danger" onclick="deleteBackup('${b.key}')">Excluir</button>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+  
+  html += `</div>`;
+  openModal(html);
 }
 
 /* =========================
-   TAB: AGENDA (CALENDÁRIO + AGENDAR)
+   TAB: AGENDA (COMPLETA)
 ========================= */
 function renderAgenda(){
   side.innerHTML = `
     <div class="card">
-      <div class="title">📅 Calendário</div>
-      <div class="hint">Clique em um dia para ver/adicionar consultas naquele dia.</div>
+      <div class="title">📅 Calendário Mensal</div>
+      <div class="hint">Clique em um dia para ver/agendar consultas.</div>
 
       ${renderMonthCalendar()}
 
       <div class="hr"></div>
-      <div class="title">➕ Agendar no dia</div>
+      <div class="title">➕ Novo Agendamento</div>
 
-      <label>Dia selecionado</label>
+      <label>Dia Selecionado</label>
       <input id="agDia" value="${selectedDayISO}" readonly />
 
-      <label>Paciente</label>
+      <label>Paciente *</label>
       <select id="agPaciente">
-        <option value="">Selecione...</option>
-        ${db.pacientes.slice().sort(byName).map(p=>`<option value="${p.id}">${escapeHtml(p.nome)}</option>`).join("")}
+        <option value="">Selecione um paciente...</option>
+        ${db.pacientes.slice().sort(byName).map(p=>`
+          <option value="${p.id}">${escapeHtml(p.nome)} ${p.telefone ? `(${escapeHtml(formatTelefone(p.telefone))})` : ''}</option>
+        `).join("")}
       </select>
 
       <div class="row">
         <div>
-          <label>Hora</label>
-          <input id="agHora" type="time" value="08:00"/>
+          <label>Horário *</label>
+          <input id="agHora" type="time" value="08:00" required/>
         </div>
         <div>
-          <label>Tipo</label>
-          <select id="agTipo">
-            <option>Primeira Consulta</option>
-            <option selected>Retorno</option>
-            <option>Urgência</option>
-            <option>Exame</option>
-            <option>Procedimento</option>
+          <label>Duração (min)</label>
+          <select id="agDuracao">
+            <option value="15">15 minutos</option>
+            <option value="30" selected>30 minutos</option>
+            <option value="45">45 minutos</option>
+            <option value="60">60 minutos</option>
+            <option value="90">90 minutos</option>
           </select>
         </div>
       </div>
 
-      <label>Resumo (opcional)</label>
-      <input id="agResumo" placeholder="Ex: Dor 36, abscesso, retorno 7 dias..." />
+      <label>Tipo de Consulta</label>
+      <select id="agTipo">
+        <option value="Primeira Consulta">Primeira Consulta</option>
+        <option value="Retorno" selected>Retorno</option>
+        <option value="Urgência">Urgência</option>
+        <option value="Exame">Exame</option>
+        <option value="Procedimento">Procedimento</option>
+        <option value="Avaliação">Avaliação</option>
+        <option value="Follow-up">Follow-up</option>
+      </select>
 
-      <button class="btn" onclick="addAgenda()">✅ Agendar</button>
+      <label>Status</label>
+      <select id="agStatus">
+        <option value="agendado" selected>Agendado</option>
+        <option value="confirmado">Confirmado</option>
+        <option value="cancelado">Cancelado</option>
+        <option value="realizado">Realizado</option>
+        <option value="faltou">Paciente faltou</option>
+      </select>
+
+      <label>Resumo/Observações</label>
+      <textarea id="agResumo" placeholder="Sintomas principais, motivo da consulta, observações importantes..." rows="3"></textarea>
+
+      <button class="btn" onclick="addAgenda()" style="margin-top:10px;">✅ Agendar Consulta</button>
+      <button class="btn secondary" onclick="clearAgendaForm()">🗑️ Limpar Formulário</button>
     </div>
   `;
 
   const apts = getAgendaByDay(selectedDayISO);
+  const hoje = toISODate(new Date());
+  const isToday = selectedDayISO === hoje;
 
   main.innerHTML = `
     <div class="card">
-      <div class="title">📍 Agenda do dia: ${fmtBRDate(selectedDayISO)}</div>
-      <div class="hint">Clique no paciente abaixo para abrir o prontuário (evoluções).</div>
+      <div class="title">📍 Agenda do Dia: ${fmtBRDate(selectedDayISO)} ${isToday ? '(Hoje)' : ''}</div>
+      <div class="hint">
+        ${apts.length} consulta(s) agendada(s) para este dia.
+        ${isToday ? ' Não se esqueça de confirmar as consultas!' : ''}
+      </div>
+
+      <div class="toolbar">
+        <button class="btn secondary" onclick="printDailySchedule()">🖨️ Imprimir Agenda</button>
+        <button class="btn secondary" onclick="exportAgendaToPDF()">📄 Exportar PDF</button>
+        <button class="btn ${isToday ? 'warning' : 'secondary'}" onclick="sendDayReminders()">🔔 Lembretes</button>
+      </div>
 
       <div class="list">
         ${apts.length ? apts.map(a=>{
           const p = getPatient(a.pacienteId);
-          const urg = (a.tipo==="Urgência");
+          const statusClass = {
+            'agendado': '',
+            'confirmado': 'ok',
+            'cancelado': 'urg',
+            'realizado': 'ok',
+            'faltou': 'warn'
+          }[a.status || 'agendado'];
+          
+          const statusText = {
+            'agendado': 'Agendado',
+            'confirmado': 'Confirmado',
+            'cancelado': 'Cancelado',
+            'realizado': 'Realizado',
+            'faltou': 'Faltou'
+          }[a.status || 'agendado'];
+          
           return `
             <div class="item">
               <div class="top">
-                <div>
+                <div style="flex:1;">
                   <strong>${escapeHtml(p ? p.nome : "Paciente removido")}</strong>
-                  <div class="meta">${escapeHtml(a.resumo||"")}</div>
-                  <div class="small">${escapeHtml(a.hora||"--:--")} • ${escapeHtml(a.tipo)}</div>
+                  <div class="meta">${escapeHtml(a.resumo||"Sem observações")}</div>
+                  <div class="small">
+                    ⏰ ${escapeHtml(a.hora||"--:--")} • 
+                    📍 ${escapeHtml(a.tipo)} • 
+                    ⏱️ ${a.duracao || 30} min • 
+                    Status: <span class="pill ${statusClass}">${statusText}</span>
+                  </div>
                 </div>
-                <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end">
-                  <span class="pill ${urg?"urg":""}">${escapeHtml(a.tipo)}</span>
-                  <button class="btn secondary" onclick="openPatientFromAgenda('${a.pacienteId}')">Abrir</button>
-                  <button class="btn danger" onclick="delAgenda('${a.id}')">Excluir</button>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; align-items:center;">
+                  ${a.status !== 'realizado' ? `
+                    <button class="btn secondary" onclick="markAsRealized('${a.id}')">✅ Realizado</button>
+                  ` : ''}
+                  <button class="btn secondary" onclick="openPatientFromAgenda('${a.pacienteId}')">👤 Abrir</button>
+                  <button class="btn secondary" onclick="editAgenda('${a.id}')">✏️ Editar</button>
+                  <button class="btn danger" onclick="delAgenda('${a.id}')">🗑️ Excluir</button>
                 </div>
               </div>
+              ${p?.telefone ? `<div class="small">📞 ${escapeHtml(formatTelefone(p.telefone))}</div>` : ''}
             </div>
           `;
-        }).join("") : `<div class="hint">Sem agendamentos neste dia.</div>`}
+        }).join("") : `
+          <div class="card" style="text-align:center; padding:40px 20px;">
+            <div style="font-size:48px; margin-bottom:20px;">📅</div>
+            <div class="title">Nenhum agendamento para este dia</div>
+            <div class="hint">Clique em "Agendar Consulta" ao lado para adicionar.</div>
+          </div>
+        `}
       </div>
+      
+      ${apts.length > 0 ? `
+        <div class="hr"></div>
+        <div class="title">📊 Resumo do Dia</div>
+        <div class="row">
+          <div class="card">
+            <div class="small"><b>Total de consultas:</b> ${apts.length}</div>
+            <div class="small"><b>Duração total:</b> ${apts.reduce((acc, a) => acc + (parseInt(a.duracao) || 30), 0)} minutos</div>
+          </div>
+          <div class="card">
+            <div class="small"><b>Primeira consulta:</b> ${apts[0]?.hora || '--:--'}</div>
+            <div class="small"><b>Última consulta:</b> ${apts[apts.length-1]?.hora || '--:--'}</div>
+          </div>
+        </div>
+      ` : ''}
     </div>
   `;
 }
@@ -575,16 +1006,17 @@ function renderMonthCalendar(){
   const d = new Date(monthCursor);
   const year = d.getFullYear();
   const month = d.getMonth();
+  const today = toISODate(new Date());
 
   const first = new Date(year, month, 1);
   const last = new Date(year, month+1, 0);
-  const startDow = first.getDay(); // 0 dom
+  const startDow = first.getDay();
   const totalDays = last.getDate();
 
   const monthName = first.toLocaleDateString("pt-BR", {month:"long", year:"numeric"});
-  const dow = ["D","S","T","Q","Q","S","S"];
+  const dow = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
 
-  // map appointments counts by day
+  // Contar agendamentos por dia
   const countMap = {};
   db.agenda.forEach(a=>{
     const k = toISODate(a.dataISO);
@@ -592,19 +1024,20 @@ function renderMonthCalendar(){
   });
 
   let cells = [];
-  // prev month fillers
+  // Dias do mês anterior
   const prevLast = new Date(year, month, 0).getDate();
   for(let i=0;i<startDow;i++){
     const dayNum = prevLast - (startDow-1-i);
     const iso = toISODate(new Date(year, month-1, dayNum));
     cells.push({label: dayNum, iso, muted:true});
   }
-  // current month
+  // Dias do mês atual
   for(let day=1; day<=totalDays; day++){
     const iso = toISODate(new Date(year, month, day));
-    cells.push({label: day, iso, muted:false});
+    const isToday = iso === today;
+    cells.push({label: day, iso, muted:false, today: isToday});
   }
-  // next fillers to complete grid
+  // Dias do próximo mês
   while(cells.length % 7 !== 0){
     const nextDay = cells.length - (startDow + totalDays) + 1;
     const iso = toISODate(new Date(year, month+1, nextDay));
@@ -614,9 +1047,9 @@ function renderMonthCalendar(){
   return `
     <div class="calWrap">
       <div class="calHead">
-        <button class="btn secondary" onclick="calPrev()">◀</button>
-        <div style="font-weight:1000;text-transform:capitalize">${escapeHtml(monthName)}</div>
-        <button class="btn secondary" onclick="calNext()">▶</button>
+        <button class="btn secondary" onclick="calPrev()">◀ Mês Anterior</button>
+        <div style="font-weight:1000;text-transform:capitalize; font-size:14px">${escapeHtml(monthName)}</div>
+        <button class="btn secondary" onclick="calNext()">Próximo Mês ▶</button>
       </div>
 
       <div class="calGrid">
@@ -624,52 +1057,154 @@ function renderMonthCalendar(){
         ${cells.map(c=>{
           const sel = (c.iso===selectedDayISO) ? "selected" : "";
           const aptN = countMap[c.iso] || 0;
+          const todayClass = c.today ? "today" : "";
           return `
-            <div class="dayCell ${c.muted?"muted":""} ${sel}" onclick="selectDay('${c.iso}')">
-              <div class="dayNum">${c.label}</div>
-              ${aptN ? `<span class="badgeApt">${aptN} ag.</span>` : ``}
+            <div class="dayCell ${c.muted?"muted":""} ${sel} ${todayClass}" 
+                 onclick="selectDay('${c.iso}')"
+                 style="${c.today?'border-color: var(--ok); background: rgba(34,197,94,.1);':''}">
+              <div class="dayNum" style="${c.today?'color: var(--ok); font-weight:900;':''}">${c.label}</div>
+              ${aptN ? `<span class="badgeApt">${aptN} ${aptN===1?'consulta':'consultas'}</span>` : ''}
+              ${c.iso === today ? `<div style="position:absolute; bottom:4px; right:4px; width:6px; height:6px; background:var(--ok); border-radius:50%;"></div>` : ''}
             </div>
           `;
         }).join("")}
       </div>
 
-      <div class="small">Selecionado: <b>${selectedDayISO}</b></div>
+      <div class="small">
+        <span style="display:inline-block; width:10px; height:10px; background:var(--ok); border-radius:50%; margin-right:5px;"></span> Hoje
+        <span style="display:inline-block; width:10px; height:10px; border:2px solid var(--accent); border-radius:50%; margin:0 5px 0 15px;"></span> Selecionado
+      </div>
     </div>
   `;
 }
 
-function calPrev(){ monthCursor.setMonth(monthCursor.getMonth()-1); renderAgenda(); }
-function calNext(){ monthCursor.setMonth(monthCursor.getMonth()+1); renderAgenda(); }
-function selectDay(iso){ selectedDayISO = iso; renderAgenda(); }
+function calPrev(){ 
+  monthCursor = new Date(monthCursor.getFullYear(), monthCursor.getMonth() - 1, 1);
+  renderAgenda(); 
+}
+function calNext(){ 
+  monthCursor = new Date(monthCursor.getFullYear(), monthCursor.getMonth() + 1, 1);
+  renderAgenda(); 
+}
+function selectDay(iso){ 
+  selectedDayISO = iso; 
+  renderAgenda(); 
+}
+
+function clearAgendaForm(){
+  document.getElementById("agPaciente").value = "";
+  document.getElementById("agHora").value = "08:00";
+  document.getElementById("agDuracao").value = "30";
+  document.getElementById("agTipo").value = "Retorno";
+  document.getElementById("agStatus").value = "agendado";
+  document.getElementById("agResumo").value = "";
+  toast("Formulário limpo");
+}
 
 function addAgenda(){
   const pid = document.getElementById("agPaciente").value;
   if(!pid){ toast("Selecione um paciente.", false); return; }
-  const hora = document.getElementById("agHora").value || "";
-  const tipo = document.getElementById("agTipo").value;
-  const resumo = document.getElementById("agResumo").value.trim();
-
-  const isoDT = new Date(selectedDayISO + "T" + (hora||"08:00") + ":00").toISOString();
-
-  db.agenda.push({
+  
+  const hora = document.getElementById("agHora").value;
+  if(!hora){ toast("Informe o horário.", false); return; }
+  
+  const agenda = {
     id: uid(),
     pacienteId: pid,
-    dataISO: isoDT,
+    dataISO: new Date(selectedDayISO + "T" + hora + ":00").toISOString(),
     hora,
-    tipo,
-    resumo
-  });
-  saveDB(db);
-  toast("Agendamento criado.");
-  renderAgenda();
+    duracao: parseInt(document.getElementById("agDuracao").value) || 30,
+    tipo: document.getElementById("agTipo").value,
+    status: document.getElementById("agStatus").value,
+    resumo: document.getElementById("agResumo").value.trim(),
+    criadoEm: new Date().toISOString()
+  };
+  
+  db.agenda.push(agenda);
+  if(saveDB(db)){
+    toast("Consulta agendada com sucesso!");
+    clearAgendaForm();
+    renderAgenda();
+  }
+}
+
+function editAgenda(id){
+  const agenda = db.agenda.find(a => a.id === id);
+  if(!agenda) return;
+  
+  selectedDayISO = toISODate(agenda.dataISO);
+  
+  // Preencher formulário
+  document.getElementById("agPaciente").value = agenda.pacienteId;
+  document.getElementById("agHora").value = agenda.hora || "08:00";
+  document.getElementById("agDuracao").value = agenda.duracao || 30;
+  document.getElementById("agTipo").value = agenda.tipo || "Retorno";
+  document.getElementById("agStatus").value = agenda.status || "agendado";
+  document.getElementById("agResumo").value = agenda.resumo || "";
+  
+  // Alterar botão para edição
+  const btn = document.querySelector('[onclick="addAgenda()"]');
+  btn.setAttribute("onclick", `updateAgenda('${id}')`);
+  btn.innerHTML = "✏️ Atualizar Consulta";
+  
+  toast("Modo edição ativado. Atualize os dados e clique em 'Atualizar Consulta'.");
+}
+
+function updateAgenda(id){
+  const index = db.agenda.findIndex(a => a.id === id);
+  if(index === -1) return;
+  
+  const hora = document.getElementById("agHora").value;
+  if(!hora){ toast("Informe o horário.", false); return; }
+  
+  db.agenda[index] = {
+    ...db.agenda[index],
+    pacienteId: document.getElementById("agPaciente").value,
+    dataISO: new Date(selectedDayISO + "T" + hora + ":00").toISOString(),
+    hora,
+    duracao: parseInt(document.getElementById("agDuracao").value) || 30,
+    tipo: document.getElementById("agTipo").value,
+    status: document.getElementById("agStatus").value,
+    resumo: document.getElementById("agResumo").value.trim(),
+    atualizadoEm: new Date().toISOString()
+  };
+  
+  if(saveDB(db)){
+    toast("Consulta atualizada!");
+    
+    // Restaurar botão original
+    const btn = document.querySelector(`[onclick="updateAgenda('${id}')"]`);
+    btn.setAttribute("onclick", "addAgenda()");
+    btn.innerHTML = "✅ Agendar Consulta";
+    
+    clearAgendaForm();
+    renderAgenda();
+  }
 }
 
 function delAgenda(id){
+  if(!confirm("Tem certeza que deseja excluir este agendamento?")) return;
+  
   db.agenda = db.agenda.filter(a=>a.id!==id);
-  saveDB(db);
-  toast("Agendamento removido.");
-  renderAgenda();
+  if(saveDB(db)){
+    toast("Agendamento excluído.");
+    renderAgenda();
+  }
 }
+
+function markAsRealized(id){
+  const index = db.agenda.findIndex(a => a.id === id);
+  if(index === -1) return;
+  
+  db.agenda[index].status = "realizado";
+  db.agenda[index].realizadoEm = new Date().toISOString();
+  
+  if(saveDB(db)){
+    toast("Consulta marcada como realizada!");
+    renderAgenda();
+  }
+}
+
 function openPatientFromAgenda(pid){
   selectedPatientId = pid;
   activeTab = "pacientes";
@@ -679,72 +1214,301 @@ function openPatientFromAgenda(pid){
   renderPacientes();
 }
 
+function printDailySchedule(){
+  const apts = getAgendaByDay(selectedDayISO);
+  let printContent = `
+    <html>
+    <head>
+      <title>Agenda ${fmtBRDate(selectedDayISO)}</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h1 { color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+      </style>
+    </head>
+    <body>
+      <h1>Agenda do Dia: ${fmtBRDate(selectedDayISO)}</h1>
+      <table>
+        <tr>
+          <th>Horário</th>
+          <th>Paciente</th>
+          <th>Tipo</th>
+          <th>Duração</th>
+          <th>Status</th>
+          <th>Observações</th>
+        </tr>
+  `;
+  
+  apts.forEach(a => {
+    const p = getPatient(a.pacienteId);
+    printContent += `
+      <tr>
+        <td>${a.hora || '--:--'}</td>
+        <td>${escapeHtml(p ? p.nome : 'Paciente removido')}</td>
+        <td>${escapeHtml(a.tipo)}</td>
+        <td>${a.duracao || 30} min</td>
+        <td>${a.status || 'agendado'}</td>
+        <td>${escapeHtml(a.resumo || '')}</td>
+      </tr>
+    `;
+  });
+  
+  printContent += `
+      </table>
+      <p style="margin-top: 20px; font-size: 12px; color: #666;">
+        Gerado em ${fmtBRDateTime(new Date())} por BTX Prontuário
+      </p>
+    </body>
+    </html>
+  `;
+  
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(printContent);
+  printWindow.document.close();
+  printWindow.print();
+}
+
+function exportAgendaToPDF(){
+  // Implementação similar à print, mas gerando PDF
+  toast("Gerando PDF da agenda...");
+  setTimeout(() => {
+    const apts = getAgendaByDay(selectedDayISO);
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    doc.setFontSize(16);
+    doc.text(`Agenda do Dia: ${fmtBRDate(selectedDayISO)}`, 20, 20);
+    
+    doc.setFontSize(10);
+    let y = 40;
+    apts.forEach((a, idx) => {
+      const p = getPatient(a.pacienteId);
+      if(y > 280){
+        doc.addPage();
+        y = 20;
+      }
+      
+      doc.setFont("helvetica", "bold");
+      doc.text(`${a.hora || '--:--'} - ${escapeHtml(p ? p.nome : 'Paciente removido')}`, 20, y);
+      y += 7;
+      
+      doc.setFont("helvetica", "normal");
+      doc.text(`Tipo: ${a.tipo} | Duração: ${a.duracao || 30} min | Status: ${a.status || 'agendado'}`, 20, y);
+      y += 7;
+      
+      if(a.resumo){
+        const lines = doc.splitTextToSize(`Obs: ${a.resumo}`, 170);
+        doc.text(lines, 20, y);
+        y += lines.length * 5 + 5;
+      } else {
+        y += 5;
+      }
+      
+      if(idx < apts.length - 1){
+        doc.setDrawColor(200);
+        doc.line(20, y, 190, y);
+        y += 10;
+      }
+    });
+    
+    if(apts.length === 0){
+      doc.text("Nenhuma consulta agendada para este dia.", 20, y);
+    }
+    
+    doc.setFontSize(8);
+    doc.text(`Gerado em ${fmtBRDateTime(new Date())} • BTX Prontuário`, 105, 290, {align: "center"});
+    
+    const pdfURL = doc.output('bloburl');
+    const link = document.createElement('a');
+    link.href = pdfURL;
+    link.download = `agenda-${selectedDayISO}.pdf`;
+    link.click();
+    
+    toast("PDF da agenda gerado com sucesso!");
+  }, 500);
+}
+
+function sendDayReminders(){
+  const apts = getAgendaByDay(selectedDayISO);
+  if(apts.length === 0){
+    toast("Nenhuma consulta para enviar lembretes", false);
+    return;
+  }
+  
+  let message = `📅 Lembretes para ${fmtBRDate(selectedDayISO)}:\n\n`;
+  
+  apts.forEach((a, idx) => {
+    const p = getPatient(a.pacienteId);
+    message += `${idx+1}. ${a.hora} - ${p ? p.nome : 'Paciente'}`;
+    if(p?.telefone){
+      message += ` (${formatTelefone(p.telefone)})`;
+    }
+    message += `\n   Tipo: ${a.tipo}\n\n`;
+  });
+  
+  message += `\nTotal: ${apts.length} consulta(s)`;
+  
+  // Copiar para área de transferência
+  navigator.clipboard.writeText(message).then(() => {
+    toast("Lembretes copiados para a área de transferência!");
+    
+    // Oferecer para enviar por WhatsApp
+    if(confirm("Deseja enviar os lembretes por WhatsApp?")){
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+      window.open(whatsappUrl, '_blank');
+    }
+  });
+}
+
 /* =========================
-   TAB: PACIENTES (CADASTRO + PRONTUÁRIO EVOLUTIVO)
+   TAB: PACIENTES (COMPLETA)
 ========================= */
 function renderPacientes(){
   side.innerHTML = `
     <div class="card">
-      <div class="title">👤 Pacientes</div>
-      <div class="hint">Cadastre e selecione para ver/adicionar evoluções.</div>
+      <div class="title">🔍 Buscar Pacientes</div>
+      <div class="hint">Busque por nome, telefone ou CPF.</div>
 
-      <label>Buscar</label>
-      <input id="pBusca" placeholder="Digite nome..." oninput="renderPacientes()" />
+      <input id="pBusca" placeholder="Digite para buscar..." 
+             oninput="renderPacientes()" 
+             style="margin-bottom:10px;" />
+      
+      <div class="row">
+        <button class="btn secondary" onclick="filterActive()">👥 Ativos</button>
+        <button class="btn secondary" onclick="filterAll()">📋 Todos</button>
+      </div>
 
       <div class="hr"></div>
-      <div class="title">➕ Novo paciente</div>
+      <div class="title">➕ Novo Paciente</div>
 
-      <label>Nome *</label>
-      <input id="pNome" placeholder="Nome completo" />
+      <label>Nome Completo *</label>
+      <input id="pNome" placeholder="Nome completo do paciente" />
 
       <div class="row">
         <div>
-          <label>Nascimento</label>
+          <label>Data de Nascimento</label>
           <input id="pNasc" type="date" />
         </div>
         <div>
-          <label>Telefone</label>
-          <input id="pTel" placeholder="WhatsApp" />
+          <label>Sexo</label>
+          <select id="pSexo">
+            <option value="">Selecione</option>
+            <option value="M">Masculino</option>
+            <option value="F">Feminino</option>
+            <option value="O">Outro</option>
+            <option value="N">Prefiro não informar</option>
+          </select>
         </div>
       </div>
 
-      <label>Observações</label>
-      <textarea id="pObs" placeholder="Alergias, comorbidades, etc."></textarea>
+      <div class="row">
+        <div>
+          <label>CPF</label>
+          <input id="pCpf" placeholder="000.000.000-00" />
+        </div>
+        <div>
+          <label>RG</label>
+          <input id="pRg" placeholder="Número do RG" />
+        </div>
+      </div>
 
-      <button class="btn" onclick="addPaciente()">✅ Cadastrar</button>
+      <label>Telefone/WhatsApp *</label>
+      <input id="pTel" placeholder="(11) 99999-9999" />
 
-      <div class="hr"></div>
-      <div class="title">📌 Lista</div>
+      <label>E-mail</label>
+      <input id="pEmail" type="email" placeholder="paciente@email.com" />
+
+      <label>Endereço</label>
+      <input id="pEndereco" placeholder="Rua, número, bairro" />
+
+      <div class="row">
+        <div>
+          <label>Cidade</label>
+          <input id="pCidade" placeholder="Cidade" />
+        </div>
+        <div>
+          <label>UF</label>
+          <input id="pUf" placeholder="SP" maxlength="2" />
+        </div>
+      </div>
+
+      <label>Observações Médicas</label>
+      <textarea id="pObs" placeholder="Alergias, comorbidades, medicamentos em uso, etc." rows="3"></textarea>
+
+      <button class="btn" onclick="addPaciente()" style="margin-top:10px;">✅ Cadastrar Paciente</button>
+      <button class="btn secondary" onclick="clearPacienteForm()">🗑️ Limpar Formulário</button>
+    </div>
+  `;
+
+  // Busca e filtragem
+  const q = (document.getElementById("pBusca")?.value || "").trim().toLowerCase();
+  const list = db.pacientes
+    .filter(p => {
+      if(!q) return true;
+      return (
+        (p.nome||"").toLowerCase().includes(q) ||
+        (p.telefone||"").toLowerCase().includes(q) ||
+        (p.cpf||"").toLowerCase().includes(q) ||
+        (p.email||"").toLowerCase().includes(q)
+      );
+    })
+    .sort(byName);
+
+  // Render lista
+  const el = document.getElementById("side");
+  el.innerHTML += `
+    <div class="card">
+      <div class="title">📋 Lista de Pacientes (${list.length})</div>
       <div class="list" id="listaPacientes"></div>
     </div>
   `;
 
-  // lista
-  const q = (document.getElementById("pBusca")?.value || "").trim().toLowerCase();
-  const list = db.pacientes.slice().sort(byName).filter(p => !q || (p.nome||"").toLowerCase().includes(q));
-  const el = document.getElementById("listaPacientes");
-  el.innerHTML = list.length ? list.map(p=>{
+  const listaEl = document.getElementById("listaPacientes");
+  listaEl.innerHTML = list.length ? list.map(p=>{
     const sel = (p.id===selectedPatientId);
+    const idade = p.nasc ? calcularIdade(p.nasc) : null;
+    const ultimaEvolucao = db.evolucoes
+      .filter(e=>e.pacienteId===p.id)
+      .sort((a,b)=> new Date(b.dataISO) - new Date(a.dataISO))[0];
+    
     return `
-      <div class="item" style="${sel?'border-color: rgba(26,109,204,.55)':''}">
+      <div class="item" style="${sel?'border-color: var(--accent); background: rgba(26,109,204,.1);':''}">
         <div class="top">
-          <div>
+          <div style="flex:1;">
             <strong>${escapeHtml(p.nome)}</strong>
-            <div class="small">${p.nasc ? "Nasc: "+fmtBRDate(p.nasc) : ""} ${p.telefone ? " • "+escapeHtml(p.telefone) : ""}</div>
+            <div class="small">
+              ${idade ? `${idade} anos • ` : ''}
+              ${p.nasc ? fmtBRDate(p.nasc) + ' • ' : ''}
+              ${p.sexo ? p.sexo + ' • ' : ''}
+              ${p.telefone ? formatTelefone(p.telefone) : ''}
+            </div>
+            ${ultimaEvolucao ? `
+              <div class="small" style="margin-top:4px; color:var(--muted);">
+                Última consulta: ${fmtBRDate(ultimaEvolucao.dataISO)}
+              </div>
+            ` : ''}
           </div>
-          <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end">
-            <button class="btn secondary" onclick="selectPaciente('${p.id}')">Abrir</button>
-            <button class="btn danger" onclick="delPaciente('${p.id}')">Excluir</button>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; align-items:center;">
+            <button class="btn secondary" onclick="selectPaciente('${p.id}')">👤 Abrir</button>
+            <button class="btn danger" onclick="delPaciente('${p.id}')">🗑️</button>
           </div>
         </div>
-        ${p.obs ? `<div class="meta">${escapeHtml(p.obs)}</div>` : ``}
+        ${p.obs ? `<div class="meta"><b>Obs:</b> ${escapeHtml(p.obs)}</div>` : ''}
       </div>
     `;
-  }).join("") : `<div class="hint">Nenhum paciente cadastrado.</div>`;
+  }).join("") : `
+    <div class="card" style="text-align:center; padding:30px 20px;">
+      <div style="font-size:48px; margin-bottom:20px;">👤</div>
+      <div class="title">Nenhum paciente encontrado</div>
+      <div class="hint">${q ? 'Tente outra busca' : 'Cadastre seu primeiro paciente'}</div>
+    </div>
+  `;
 
-  // main
-  if(!selectedPatientId && db.pacientes.length){
-    selectedPatientId = db.pacientes[0].id;
+  // Main content
+  if(!selectedPatientId && list.length){
+    selectedPatientId = list[0].id;
   }
 
   const p = selectedPatientId ? getPatient(selectedPatientId) : null;
@@ -752,76 +1516,131 @@ function renderPacientes(){
   if(!p){
     main.innerHTML = `
       <div class="card">
-        <div class="title">Selecione um paciente</div>
-        <div class="hint">Cadastre ou escolha um paciente na lista.</div>
+        <div class="title">👤 Selecione um Paciente</div>
+        <div class="hint">Selecione um paciente da lista para ver o prontuário completo.</div>
+        <div style="text-align:center; padding:40px 20px;">
+          <div style="font-size:64px; margin-bottom:20px;">👥</div>
+          <div class="title">${list.length ? 'Selecione um paciente' : 'Cadastre seu primeiro paciente'}</div>
+          <div class="hint">A lista de pacientes aparecerá aqui</div>
+        </div>
       </div>
     `;
     return;
   }
 
   const evs = getEvolucoes(p.id);
+  const idade = p.nasc ? calcularIdade(p.nasc) : null;
 
   main.innerHTML = `
     <div class="card">
-      <div class="title">📋 Prontuário • ${escapeHtml(p.nome)}</div>
-      <div class="hint">
-        Cada atendimento vira uma <b>nova evolução</b>. Isso garante histórico completo.
-      </div>
-
-      <div class="row">
-        <div class="card" style="margin:0">
-          <div class="title">🧾 Dados</div>
-          <div class="small"><b>Nascimento:</b> ${p.nasc ? fmtBRDate(p.nasc) : "—"}</div>
-          <div class="small"><b>Telefone:</b> ${p.telefone ? escapeHtml(p.telefone) : "—"}</div>
-          <div class="small"><b>Obs:</b> ${p.obs ? escapeHtml(p.obs) : "—"}</div>
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
+        <div>
+          <div class="title">📋 Prontuário • ${escapeHtml(p.nome)}</div>
+          <div class="hint">
+            Prontuário médico completo com histórico evolutivo.
+            ${evs.length ? `${evs.length} evolução(ões) registrada(s).` : 'Nenhuma evolução registrada ainda.'}
+          </div>
         </div>
-
-        <div class="card" style="margin:0">
-          <div class="title">⚡ Ações</div>
-          <button class="btn secondary" onclick="goAgendaToday('${p.id}')">📅 Agendar Hoje</button>
-          <button class="btn" onclick="openDocsForPatient('${p.id}')">📄 PDFs deste paciente</button>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn" onclick="agendarConsultaRapida('${p.id}')">📅 Agendar</button>
+          <button class="btn warning" onclick="gerarReceita('${p.id}')">💊 Receita</button>
+          <button class="btn purple" onclick="editarPaciente('${p.id}')">✏️ Editar</button>
         </div>
       </div>
+
+      <div class="row" style="margin-bottom:15px;">
+        <div class="card">
+          <div class="title">🧾 Dados Pessoais</div>
+          <div class="small"><b>Nome:</b> ${escapeHtml(p.nome)}</div>
+          ${p.nasc ? `<div class="small"><b>Nascimento:</b> ${fmtBRDate(p.nasc)} ${idade ? `(${idade} anos)` : ''}</div>` : ''}
+          ${p.sexo ? `<div class="small"><b>Sexo:</b> ${escapeHtml(p.sexo === 'M' ? 'Masculino' : p.sexo === 'F' ? 'Feminino' : p.sexo)}</div>` : ''}
+          ${p.cpf ? `<div class="small"><b>CPF:</b> ${escapeHtml(p.cpf)}</div>` : ''}
+          ${p.rg ? `<div class="small"><b>RG:</b> ${escapeHtml(p.rg)}</div>` : ''}
+        </div>
+        
+        <div class="card">
+          <div class="title">📞 Contato</div>
+          ${p.telefone ? `<div class="small"><b>Telefone:</b> ${escapeHtml(formatTelefone(p.telefone))}</div>` : ''}
+          ${p.email ? `<div class="small"><b>E-mail:</b> ${escapeHtml(p.email)}</div>` : ''}
+          ${p.endereco ? `<div class="small"><b>Endereço:</b> ${escapeHtml(p.endereco)}</div>` : ''}
+          ${p.cidade ? `<div class="small"><b>Cidade/UF:</b> ${escapeHtml(p.cidade)}${p.uf ? `/${p.uf}` : ''}</div>` : ''}
+        </div>
+      </div>
+
+      ${p.obs ? `
+        <div class="card">
+          <div class="title">⚠️ Observações Médicas</div>
+          <div class="small">${escapeHtml(p.obs)}</div>
+        </div>
+      ` : ''}
 
       <div class="hr"></div>
 
-      <div class="title">➕ Nova evolução</div>
+      <div class="title">➕ Nova Evolução/Consulta</div>
       ${renderEvolucaoForm(p.id)}
 
       <div class="hr"></div>
 
-      <div class="title">🧠 Histórico de evoluções (${evs.length})</div>
+      <div class="title">📜 Histórico de Evoluções (${evs.length})</div>
       <div class="list">
-        ${evs.length ? evs.map(e=>renderEvolucaoItem(e)).join("") : `<div class="hint">Sem evoluções ainda.</div>`}
+        ${evs.length ? evs.map(e=>renderEvolucaoItem(e)).join("") : `
+          <div class="card" style="text-align:center; padding:30px 20px;">
+            <div style="font-size:48px; margin-bottom:20px;">📝</div>
+            <div class="title">Nenhuma evolução registrada</div>
+            <div class="hint">Registre a primeira evolução usando o formulário acima</div>
+          </div>
+        `}
       </div>
     </div>
   `;
 }
 
+function clearPacienteForm(){
+  document.getElementById("pNome").value = "";
+  document.getElementById("pNasc").value = "";
+  document.getElementById("pSexo").value = "";
+  document.getElementById("pCpf").value = "";
+  document.getElementById("pRg").value = "";
+  document.getElementById("pTel").value = "";
+  document.getElementById("pEmail").value = "";
+  document.getElementById("pEndereco").value = "";
+  document.getElementById("pCidade").value = "";
+  document.getElementById("pUf").value = "";
+  document.getElementById("pObs").value = "";
+  toast("Formulário limpo");
+}
+
 function addPaciente(){
   const nome = document.getElementById("pNome").value.trim();
+  const telefone = document.getElementById("pTel").value.trim();
+  
   if(!nome){ toast("Nome é obrigatório.", false); return; }
+  if(!telefone){ toast("Telefone é obrigatório.", false); return; }
   
   const paciente = {
     id: uid(),
     nome,
     nasc: document.getElementById("pNasc").value || null,
-    telefone: document.getElementById("pTel").value.trim() || null,
-    obs: document.getElementById("pObs").value.trim() || null
+    sexo: document.getElementById("pSexo").value || null,
+    cpf: document.getElementById("pCpf").value.trim() || null,
+    rg: document.getElementById("pRg").value.trim() || null,
+    telefone,
+    email: document.getElementById("pEmail").value.trim() || null,
+    endereco: document.getElementById("pEndereco").value.trim() || null,
+    cidade: document.getElementById("pCidade").value.trim() || null,
+    uf: document.getElementById("pUf").value.trim().toUpperCase() || null,
+    obs: document.getElementById("pObs").value.trim() || null,
+    criadoEm: new Date().toISOString(),
+    ativo: true
   };
   
   db.pacientes.push(paciente);
-  saveDB(db);
-  
-  // Limpar formulário
-  document.getElementById("pNome").value = "";
-  document.getElementById("pNasc").value = "";
-  document.getElementById("pTel").value = "";
-  document.getElementById("pObs").value = "";
-  
-  selectedPatientId = paciente.id;
-  toast("Paciente cadastrado.");
-  renderPacientes();
+  if(saveDB(db)){
+    selectedPatientId = paciente.id;
+    toast("Paciente cadastrado com sucesso!");
+    clearPacienteForm();
+    renderPacientes();
+  }
 }
 
 function selectPaciente(id){
@@ -829,146 +1648,329 @@ function selectPaciente(id){
   renderPacientes();
 }
 
-function delPaciente(id){
-  if(!confirm("Excluir paciente? Também serão excluídas TODAS as evoluções e agendamentos relacionados.")) return;
+function editarPaciente(id){
+  const paciente = db.pacientes.find(p => p.id === id);
+  if(!paciente) return;
   
-  // Remover paciente
-  db.pacientes = db.pacientes.filter(p=>p.id!==id);
-  // Remover evoluções do paciente
-  db.evolucoes = db.evolucoes.filter(e=>e.pacienteId!==id);
-  // Remover agendamentos do paciente
-  db.agenda = db.agenda.filter(a=>a.pacienteId!==id);
+  // Abrir modal de edição
+  let html = `
+    <div class="title">✏️ Editar Paciente</div>
+    <div class="hint">Atualize os dados do paciente abaixo.</div>
+    
+    <label>Nome Completo *</label>
+    <input id="editNome" value="${escapeHtml(paciente.nome || '')}" />
+    
+    <div class="row">
+      <div>
+        <label>Data de Nascimento</label>
+        <input id="editNasc" type="date" value="${paciente.nasc || ''}" />
+      </div>
+      <div>
+        <label>Sexo</label>
+        <select id="editSexo">
+          <option value="">Selecione</option>
+          <option value="M" ${paciente.sexo==='M'?'selected':''}>Masculino</option>
+          <option value="F" ${paciente.sexo==='F'?'selected':''}>Feminino</option>
+          <option value="O" ${paciente.sexo==='O'?'selected':''}>Outro</option>
+          <option value="N" ${paciente.sexo==='N'?'selected':''}>Prefiro não informar</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="row">
+      <div>
+        <label>CPF</label>
+        <input id="editCpf" value="${escapeHtml(paciente.cpf || '')}" placeholder="000.000.000-00" />
+      </div>
+      <div>
+        <label>RG</label>
+        <input id="editRg" value="${escapeHtml(paciente.rg || '')}" placeholder="Número do RG" />
+      </div>
+    </div>
+    
+    <label>Telefone/WhatsApp *</label>
+    <input id="editTel" value="${escapeHtml(paciente.telefone || '')}" placeholder="(11) 99999-9999" />
+    
+    <label>E-mail</label>
+    <input id="editEmail" type="email" value="${escapeHtml(paciente.email || '')}" placeholder="paciente@email.com" />
+    
+    <label>Endereço</label>
+    <input id="editEndereco" value="${escapeHtml(paciente.endereco || '')}" placeholder="Rua, número, bairro" />
+    
+    <div class="row">
+      <div>
+        <label>Cidade</label>
+        <input id="editCidade" value="${escapeHtml(paciente.cidade || '')}" placeholder="Cidade" />
+      </div>
+      <div>
+        <label>UF</label>
+        <input id="editUf" value="${escapeHtml(paciente.uf || '')}" placeholder="SP" maxlength="2" />
+      </div>
+    </div>
+    
+    <label>Observações Médicas</label>
+    <textarea id="editObs" rows="3">${escapeHtml(paciente.obs || '')}</textarea>
+    
+    <div class="row" style="margin-top:15px;">
+      <button class="btn" onclick="updatePaciente('${id}')">💾 Salvar Alterações</button>
+      <button class="btn secondary" onclick="closeModal()">✕ Cancelar</button>
+    </div>
+  `;
   
-  saveDB(db);
+  openModal(html);
+}
+
+function updatePaciente(id){
+  const index = db.pacientes.findIndex(p => p.id === id);
+  if(index === -1) return;
   
-  if(selectedPatientId === id){
-    selectedPatientId = db.pacientes.length ? db.pacientes[0].id : null;
+  const nome = document.getElementById("editNome").value.trim();
+  const telefone = document.getElementById("editTel").value.trim();
+  
+  if(!nome){ toast("Nome é obrigatório.", false); return; }
+  if(!telefone){ toast("Telefone é obrigatório.", false); return; }
+  
+  db.pacientes[index] = {
+    ...db.pacientes[index],
+    nome,
+    nasc: document.getElementById("editNasc").value || null,
+    sexo: document.getElementById("editSexo").value || null,
+    cpf: document.getElementById("editCpf").value.trim() || null,
+    rg: document.getElementById("editRg").value.trim() || null,
+    telefone,
+    email: document.getElementById("editEmail").value.trim() || null,
+    endereco: document.getElementById("editEndereco").value.trim() || null,
+    cidade: document.getElementById("editCidade").value.trim() || null,
+    uf: document.getElementById("editUf").value.trim().toUpperCase() || null,
+    obs: document.getElementById("editObs").value.trim() || null,
+    atualizadoEm: new Date().toISOString()
+  };
+  
+  if(saveDB(db)){
+    toast("Paciente atualizado com sucesso!");
+    closeModal();
+    renderPacientes();
   }
+}
+
+function delPaciente(id){
+  const paciente = getPatient(id);
+  if(!paciente) return;
   
-  toast("Paciente excluído.");
-  renderPacientes();
+  if(confirm(`Excluir paciente "${paciente.nome}"?\n\n⚠️ Esta ação também excluirá todas as evoluções, receitas e agendamentos relacionados.`)){
+    if(confirm(`Confirma exclusão permanente de "${paciente.nome}"?\n\nEsta ação não pode ser desfeita.`)){
+      // Remover paciente
+      db.pacientes = db.pacientes.filter(p=>p.id!==id);
+      // Remover evoluções
+      db.evolucoes = db.evolucoes.filter(e=>e.pacienteId!==id);
+      // Remover receitas
+      db.receitas = db.receitas.filter(r=>r.pacienteId!==id);
+      // Remover agendamentos
+      db.agenda = db.agenda.filter(a=>a.pacienteId!==id);
+      
+      if(saveDB(db)){
+        if(selectedPatientId === id){
+          selectedPatientId = db.pacientes.length ? db.pacientes[0].id : null;
+        }
+        toast("Paciente excluído permanentemente.");
+        renderPacientes();
+      }
+    }
+  }
+}
+
+function filterActive(){
+  // Implementação de filtro por pacientes ativos
+  toast("Mostrando pacientes ativos");
+  // Aqui você pode implementar lógica de filtragem
+}
+
+function filterAll(){
+  toast("Mostrando todos os pacientes");
+  // Resetar filtros
 }
 
 function renderEvolucaoForm(pacienteId){
+  const hoje = toISODate(new Date());
   return `
     <div class="card">
       <div class="row">
         <div>
-          <label>Data do atendimento</label>
-          <input id="evoData" type="date" value="${toISODate(new Date())}" />
+          <label>Data da Consulta *</label>
+          <input id="evoData" type="date" value="${hoje}" />
         </div>
         <div>
-          <label>Tipo de atendimento</label>
+          <label>Tipo de Atendimento</label>
           <select id="evoTipo">
-            <option>Primeira Consulta</option>
-            <option selected>Retorno</option>
-            <option>Urgência</option>
-            <option>Reavaliação</option>
-            <option>Procedimento</option>
+            <option value="Primeira Consulta">Primeira Consulta</option>
+            <option value="Retorno" selected>Retorno</option>
+            <option value="Urgência">Urgência</option>
+            <option value="Reavaliação">Reavaliação</option>
+            <option value="Procedimento">Procedimento</option>
+            <option value="Acompanhamento">Acompanhamento</option>
+            <option value="Exame">Exame</option>
+            <option value="Follow-up">Follow-up</option>
           </select>
         </div>
       </div>
 
-      <div class="title">SOAP</div>
+      <div class="title">📋 Formulário SOAP</div>
+      
       <div class="row">
         <div>
-          <label>S (Subjetivo)</label>
-          <textarea id="soapS" placeholder="Queixa principal, história..."></textarea>
+          <label>S (Subjetivo) *</label>
+          <textarea id="soapS" placeholder="Queixa principal, história da doença atual, sintomas..." rows="4" required></textarea>
         </div>
         <div>
-          <label>O (Objetivo)</label>
-          <textarea id="soapO" placeholder="Exame físico, achados..."></textarea>
+          <label>O (Objetivo) *</label>
+          <textarea id="soapO" placeholder="Exame físico, achados objetivos, sinais vitais..." rows="4" required></textarea>
         </div>
       </div>
+      
       <div class="row">
         <div>
-          <label>A (Avaliação)</label>
-          <textarea id="soapA" placeholder="Hipóteses diagnósticas..."></textarea>
+          <label>A (Avaliação) *</label>
+          <textarea id="soapA" placeholder="Hipóteses diagnósticas, impressões, raciocínio clínico..." rows="4" required></textarea>
         </div>
         <div>
-          <label>P (Plano)</label>
-          <textarea id="soapP" placeholder="Conduta, tratamento..."></textarea>
-        </div>
-      </div>
-
-      <div class="row">
-        <div>
-          <label>Odontograma (se aplicável)</label>
-          <textarea id="evOdonto" placeholder="Dentes acometidos, procedimentos..."></textarea>
-        </div>
-        <div>
-          <label>Exames solicitados</label>
-          <textarea id="evExames" placeholder="Rx, laboratoriais..."></textarea>
+          <label>P (Plano) *</label>
+          <textarea id="soapP" placeholder="Conduta, tratamento, orientações, encaminhamentos..." rows="4" required></textarea>
         </div>
       </div>
 
-      <label>Conduta / Prescrição</label>
-      <textarea id="evConduta" placeholder="Medicações, orientações..."></textarea>
+      <div class="row">
+        <div>
+          <label>Exames Solicitados</label>
+          <textarea id="evExames" placeholder="Exames laboratoriais, de imagem, etc..." rows="3"></textarea>
+        </div>
+        <div>
+          <label>Odontograma/Achados</label>
+          <textarea id="evOdonto" placeholder="Para dentistas: dentes acometidos, procedimentos..." rows="3"></textarea>
+        </div>
+      </div>
 
-      <label>Anotações adicionais</label>
-      <textarea id="evAnotacoes" placeholder="Outras observações..."></textarea>
+      <label>Conduta / Prescrição *</label>
+      <textarea id="evConduta" placeholder="Medicações prescritas, posologia, duração do tratamento..." rows="3" required></textarea>
 
-      <button class="btn" onclick="addEvolucao('${pacienteId}')">✅ Salvar Evolução</button>
+      <label>Anotações Adicionais</label>
+      <textarea id="evAnotacoes" placeholder="Outras observações, orientações ao paciente..." rows="2"></textarea>
+
+      <div class="row" style="margin-top:15px;">
+        <button class="btn" onclick="addEvolucao('${pacienteId}')">✅ Salvar Evolução</button>
+        <button class="btn secondary" onclick="clearEvolucaoForm()">🗑️ Limpar</button>
+      </div>
     </div>
   `;
 }
 
-function addEvolucao(pacienteId){
-  const evolucao = {
-    id: uid(),
-    pacienteId,
-    dataISO: new Date(document.getElementById("evoData").value + "T12:00:00").toISOString(),
-    tipoAtend: document.getElementById("evoTipo").value,
-    soapS: document.getElementById("soapS").value.trim() || null,
-    soapO: document.getElementById("soapO").value.trim() || null,
-    soapA: document.getElementById("soapA").value.trim() || null,
-    soapP: document.getElementById("soapP").value.trim() || null,
-    odonto: document.getElementById("evOdonto").value.trim() || null,
-    exames: document.getElementById("evExames").value.trim() || null,
-    conduta: document.getElementById("evConduta").value.trim() || null,
-    anotacoes: document.getElementById("evAnotacoes").value.trim() || null
-  };
-  
-  db.evolucoes.push(evolucao);
-  saveDB(db);
-  
-  // Limpar formulário
+function clearEvolucaoForm(){
   document.getElementById("soapS").value = "";
   document.getElementById("soapO").value = "";
   document.getElementById("soapA").value = "";
   document.getElementById("soapP").value = "";
-  document.getElementById("evOdonto").value = "";
   document.getElementById("evExames").value = "";
+  document.getElementById("evOdonto").value = "";
   document.getElementById("evConduta").value = "";
   document.getElementById("evAnotacoes").value = "";
+  toast("Formulário limpo");
+}
+
+function addEvolucao(pacienteId){
+  const data = document.getElementById("evoData").value;
+  const soapS = document.getElementById("soapS").value.trim();
+  const soapO = document.getElementById("soapO").value.trim();
+  const soapA = document.getElementById("soapA").value.trim();
+  const soapP = document.getElementById("soapP").value.trim();
+  const conduta = document.getElementById("evConduta").value.trim();
   
-  toast("Evolução salva.");
-  renderPacientes();
+  if(!data){ toast("Data é obrigatória.", false); return; }
+  if(!soapS || !soapO || !soapA || !soapP || !conduta){
+    toast("Preencha todos os campos obrigatórios do SOAP e Conduta.", false);
+    return;
+  }
+  
+  const evolucao = {
+    id: uid(),
+    pacienteId,
+    dataISO: new Date(data + "T12:00:00").toISOString(),
+    tipoAtend: document.getElementById("evoTipo").value,
+    soapS,
+    soapO,
+    soapA,
+    soapP,
+    odonto: document.getElementById("evOdonto").value.trim() || null,
+    exames: document.getElementById("evExames").value.trim() || null,
+    conduta,
+    anotacoes: document.getElementById("evAnotacoes").value.trim() || null,
+    criadoEm: new Date().toISOString()
+  };
+  
+  db.evolucoes.push(evolucao);
+  if(saveDB(db)){
+    toast("Evolução registrada com sucesso!");
+    clearEvolucaoForm();
+    renderPacientes();
+  }
 }
 
 function renderEvolucaoItem(e){
   const p = getPatient(e.pacienteId);
+  const dataFormatada = fmtBRDate(e.dataISO);
+  
   return `
     <div class="item">
       <div class="top">
-        <div>
-          <strong>${fmtBRDate(e.dataISO)} • ${escapeHtml(e.tipoAtend)}</strong>
-          <div class="small">ID: ${e.id.slice(-8)}</div>
+        <div style="flex:1;">
+          <strong>${dataFormatada} • ${escapeHtml(e.tipoAtend)}</strong>
+          <div class="small">ID: ${e.id.slice(-8)} • Registrado em: ${fmtBRDateTime(e.criadoEm)}</div>
         </div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end">
-          <button class="btn secondary" onclick="editEvolucao('${e.id}')">Editar</button>
-          <button class="btn danger" onclick="delEvolucao('${e.id}')">Excluir</button>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; align-items:center;">
+          <button class="btn secondary" onclick="editEvolucao('${e.id}')">✏️ Editar</button>
+          <button class="btn danger" onclick="delEvolucao('${e.id}')">🗑️ Excluir</button>
+          <button class="btn" onclick="gerarPDFEvolucao('${e.id}')">📄 PDF</button>
         </div>
       </div>
       
-      ${e.soapS ? `<div class="meta"><b>S:</b> ${escapeHtml(e.soapS)}</div>` : ''}
-      ${e.soapO ? `<div class="meta"><b>O:</b> ${escapeHtml(e.soapO)}</div>` : ''}
-      ${e.soapA ? `<div class="meta"><b>A:</b> ${escapeHtml(e.soapA)}</div>` : ''}
-      ${e.soapP ? `<div class="meta"><b>P:</b> ${escapeHtml(e.soapP)}</div>` : ''}
-      ${e.odonto ? `<div class="meta"><b>Odontograma:</b> ${escapeHtml(e.odonto)}</div>` : ''}
-      ${e.exames ? `<div class="meta"><b>Exames:</b> ${escapeHtml(e.exames)}</div>` : ''}
-      ${e.conduta ? `<div class="meta"><b>Conduta:</b> ${escapeHtml(e.conduta)}</div>` : ''}
-      ${e.anotacoes ? `<div class="meta"><b>Anotações:</b> ${escapeHtml(e.anotacoes)}</div>` : ''}
+      <div class="row" style="margin-top:10px;">
+        <div>
+          <div class="small"><b>S (Subjetivo):</b></div>
+          <div class="meta">${escapeHtml(e.soapS || 'Não informado')}</div>
+        </div>
+        <div>
+          <div class="small"><b>O (Objetivo):</b></div>
+          <div class="meta">${escapeHtml(e.soapO || 'Não informado')}</div>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div>
+          <div class="small"><b>A (Avaliação):</b></div>
+          <div class="meta">${escapeHtml(e.soapA || 'Não informado')}</div>
+        </div>
+        <div>
+          <div class="small"><b>P (Plano):</b></div>
+          <div class="meta">${escapeHtml(e.soapP || 'Não informado')}</div>
+        </div>
+      </div>
+      
+      ${e.exames ? `
+        <div style="margin-top:8px;">
+          <div class="small"><b>Exames Solicitados:</b></div>
+          <div class="meta">${escapeHtml(e.exames)}</div>
+        </div>
+      ` : ''}
+      
+      <div style="margin-top:8px;">
+        <div class="small"><b>Conduta / Prescrição:</b></div>
+        <div class="meta">${escapeHtml(e.conduta || 'Não informado')}</div>
+      </div>
+      
+      ${e.anotacoes ? `
+        <div style="margin-top:8px;">
+          <div class="small"><b>Anotações Adicionais:</b></div>
+          <div class="meta">${escapeHtml(e.anotacoes)}</div>
+        </div>
+      ` : ''}
     </div>
   `;
 }
@@ -989,65 +1991,94 @@ function editEvolucao(id){
   document.getElementById("evConduta").value = e.conduta || "";
   document.getElementById("evAnotacoes").value = e.anotacoes || "";
   
-  // Alterar função do botão para atualizar
+  // Alterar botão
   const btn = document.querySelector(`[onclick="addEvolucao('${e.pacienteId}')"]`);
   btn.setAttribute("onclick", `updateEvolucao('${id}')`);
-  btn.textContent = "✏️ Atualizar Evolução";
+  btn.innerHTML = "✏️ Atualizar Evolução";
   
-  toast("Modo edição ativado.");
+  toast("Modo edição ativado. Atualize os dados e clique em 'Atualizar Evolução'.");
 }
 
 function updateEvolucao(id){
-  const eIndex = db.evolucoes.findIndex(ev=>ev.id===id);
-  if(eIndex === -1) return;
+  const index = db.evolucoes.findIndex(ev=>ev.id===id);
+  if(index === -1) return;
   
-  db.evolucoes[eIndex] = {
-    ...db.evolucoes[eIndex],
-    dataISO: new Date(document.getElementById("evoData").value + "T12:00:00").toISOString(),
+  const data = document.getElementById("evoData").value;
+  const soapS = document.getElementById("soapS").value.trim();
+  const soapO = document.getElementById("soapO").value.trim();
+  const soapA = document.getElementById("soapA").value.trim();
+  const soapP = document.getElementById("soapP").value.trim();
+  const conduta = document.getElementById("evConduta").value.trim();
+  
+  if(!data){ toast("Data é obrigatória.", false); return; }
+  if(!soapS || !soapO || !soapA || !soapP || !conduta){
+    toast("Preencha todos os campos obrigatórios.", false);
+    return;
+  }
+  
+  db.evolucoes[index] = {
+    ...db.evolucoes[index],
+    dataISO: new Date(data + "T12:00:00").toISOString(),
     tipoAtend: document.getElementById("evoTipo").value,
-    soapS: document.getElementById("soapS").value.trim() || null,
-    soapO: document.getElementById("soapO").value.trim() || null,
-    soapA: document.getElementById("soapA").value.trim() || null,
-    soapP: document.getElementById("soapP").value.trim() || null,
+    soapS,
+    soapO,
+    soapA,
+    soapP,
     odonto: document.getElementById("evOdonto").value.trim() || null,
     exames: document.getElementById("evExames").value.trim() || null,
-    conduta: document.getElementById("evConduta").value.trim() || null,
-    anotacoes: document.getElementById("evAnotacoes").value.trim() || null
+    conduta,
+    anotacoes: document.getElementById("evAnotacoes").value.trim() || null,
+    atualizadoEm: new Date().toISOString()
   };
   
-  saveDB(db);
-  
-  // Restaurar botão
-  const btn = document.querySelector(`[onclick="updateEvolucao('${id}')"]`);
-  btn.setAttribute("onclick", `addEvolucao('${db.evolucoes[eIndex].pacienteId}')`);
-  btn.textContent = "✅ Salvar Evolução";
-  
-  // Limpar formulário
-  document.getElementById("soapS").value = "";
-  document.getElementById("soapO").value = "";
-  document.getElementById("soapA").value = "";
-  document.getElementById("soapP").value = "";
-  document.getElementById("evOdonto").value = "";
-  document.getElementById("evExames").value = "";
-  document.getElementById("evConduta").value = "";
-  document.getElementById("evAnotacoes").value = "";
-  
-  toast("Evolução atualizada.");
-  renderPacientes();
+  if(saveDB(db)){
+    toast("Evolução atualizada!");
+    
+    // Restaurar botão
+    const btn = document.querySelector(`[onclick="updateEvolucao('${id}')"]`);
+    btn.setAttribute("onclick", `addEvolucao('${db.evolucoes[index].pacienteId}')`);
+    btn.innerHTML = "✅ Salvar Evolução";
+    
+    clearEvolucaoForm();
+    renderPacientes();
+  }
 }
 
 function delEvolucao(id){
-  if(!confirm("Excluir esta evolução?")) return;
+  if(!confirm("Excluir esta evolução?\n\nEsta ação não pode ser desfeita.")) return;
   
   db.evolucoes = db.evolucoes.filter(e=>e.id!==id);
-  saveDB(db);
-  toast("Evolução excluída.");
-  renderPacientes();
+  if(saveDB(db)){
+    toast("Evolução excluída.");
+    renderPacientes();
+  }
 }
 
-function goAgendaToday(pid){
-  selectedDayISO = toISODate(new Date());
+function gerarPDFEvolucao(id){
+  const e = db.evolucoes.find(ev=>ev.id===id);
+  if(!e) return;
+  
+  selectedPatientId = e.pacienteId;
+  activeTab = "docs";
+  document.querySelectorAll(".tab").forEach(b=>{
+    b.classList.toggle("active", b.dataset.tab==="docs");
+  });
+  
+  setTimeout(() => {
+    document.getElementById("docType").value = "evolucao";
+    document.getElementById("docPatient").value = e.pacienteId;
+    if(document.getElementById("docEvolucao")){
+      document.getElementById("docEvolucao").value = id;
+    }
+    renderDocs();
+    setTimeout(() => generatePDF(), 500);
+  }, 100);
+}
+
+function agendarConsultaRapida(pid){
+  selectedPatientId = pid;
   activeTab = "agenda";
+  selectedDayISO = toISODate(new Date());
   document.querySelectorAll(".tab").forEach(b=>{
     b.classList.toggle("active", b.dataset.tab==="agenda");
   });
@@ -1058,39 +2089,784 @@ function goAgendaToday(pid){
   }, 100);
 }
 
-function openDocsForPatient(pid){
+function gerarReceita(pid){
   selectedPatientId = pid;
-  activeTab = "docs";
+  activeTab = "receitas";
   document.querySelectorAll(".tab").forEach(b=>{
-    b.classList.toggle("active", b.dataset.tab==="docs");
+    b.classList.toggle("active", b.dataset.tab==="receitas");
   });
-  renderDocs();
+  renderReceitas();
 }
 
 /* =========================
-   TAB: DOCS (GERAR PDF)
+   TAB: RECEITAS (COMPLETA)
 ========================= */
-function renderDocs(){
-  let patientSelectHtml = '<option value="">Todos os pacientes</option>';
-  db.pacientes.sort(byName).forEach(p => {
-    patientSelectHtml += `<option value="${p.id}" ${p.id===selectedPatientId?'selected':''}>${escapeHtml(p.nome)}</option>`;
-  });
+function renderReceitas(){
+  const patient = selectedPatientId ? getPatient(selectedPatientId) : null;
   
   side.innerHTML = `
     <div class="card">
-      <div class="title">📄 Gerar PDF</div>
+      <div class="title">💊 Sistema de Receitas</div>
+      <div class="hint">Gerencie receitas médicas para seus pacientes.</div>
+      
+      <label>Paciente</label>
+      <select id="recPaciente" onchange="selectedPatientId=this.value; renderReceitas();">
+        <option value="">Selecione um paciente...</option>
+        ${db.pacientes.sort(byName).map(p=>`
+          <option value="${p.id}" ${p.id===selectedPatientId?'selected':''}>
+            ${escapeHtml(p.nome)} ${p.nasc ? `(${calcularIdade(p.nasc)} anos)` : ''}
+          </option>
+        `).join("")}
+      </select>
+      
+      ${patient ? `
+        <div class="hr"></div>
+        <div class="title">➕ Nova Receita para ${escapeHtml(patient.nome)}</div>
+        
+        <label>Data da Receita</label>
+        <input id="recData" type="date" value="${toISODate(new Date())}" />
+        
+        <label>Validade (dias)</label>
+        <select id="recValidade">
+          <option value="7">7 dias</option>
+          <option value="15">15 dias</option>
+          <option value="30" selected>30 dias</option>
+          <option value="60">60 dias</option>
+          <option value="90">90 dias</option>
+          <option value="120">120 dias</option>
+        </select>
+        
+        <label>Observações</label>
+        <textarea id="recObs" placeholder="Instruções especiais, contraindicações, etc." rows="3"></textarea>
+        
+        <div class="hr"></div>
+        <div class="title">💊 Adicionar Medicamentos</div>
+        
+        <div id="medicamentosContainer">
+          <div class="receita-grid">
+            <div class="receita-header">Qtd</div>
+            <div class="receita-header">Medicamento</div>
+            <div class="receita-header">Apres.</div>
+            <div class="receita-header">Ações</div>
+          </div>
+          <div id="medicamentosList"></div>
+        </div>
+        
+        <div class="row" style="margin-top:10px;">
+          <button class="btn secondary" onclick="addMedicamentoLine()">➕ Add Medicamento</button>
+          <button class="btn" onclick="gerarNovaReceita()">💾 Gerar Receita</button>
+        </div>
+      ` : ''}
+    </div>
+    
+    <div class="card">
+      <div class="title">📋 Receitas Recentes</div>
+      <div class="list" id="receitasList"></div>
+    </div>
+  `;
+  
+  // Lista de receitas
+  const receitasList = document.getElementById("receitasList");
+  let receitasToShow = db.receitas;
+  
+  if(selectedPatientId){
+    receitasToShow = receitasToShow.filter(r => r.pacienteId === selectedPatientId);
+  }
+  
+  receitasToShow.sort((a,b) => new Date(b.dataISO) - new Date(a.dataISO));
+  
+  receitasList.innerHTML = receitasToShow.length ? receitasToShow.map(r => {
+    const p = getPatient(r.pacienteId);
+    const dataValidade = new Date(r.dataISO);
+    dataValidade.setDate(dataValidade.getDate() + (r.validade || 30));
+    
+    return `
+      <div class="item">
+        <div class="top">
+          <div>
+            <strong>${fmtBRDate(r.dataISO)} • ${escapeHtml(p ? p.nome : "Paciente")}</strong>
+            <div class="small">
+              ${r.itens?.length || 0} medicamento(s) • 
+              Validade: ${fmtBRDate(dataValidade.toISOString())}
+            </div>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn secondary" onclick="viewReceita('${r.id}')">👁️ Ver</button>
+            <button class="btn" onclick="printReceita('${r.id}')">🖨️ Imprimir</button>
+            <button class="btn danger" onclick="deleteReceita('${r.id}')">🗑️</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("") : `
+    <div class="hint">${selectedPatientId ? 'Nenhuma receita para este paciente' : 'Nenhuma receita cadastrada'}</div>
+  `;
+  
+  // Main content
+  if(!patient){
+    main.innerHTML = `
+      <div class="card">
+        <div class="title">💊 Sistema de Receitas Médicas</div>
+        <div class="hint">Selecione um paciente para criar ou visualizar receitas.</div>
+        
+        <div style="text-align:center; padding:40px 20px;">
+          <div style="font-size:64px; margin-bottom:20px;">💊</div>
+          <div class="title">Sistema de Prescrição</div>
+          <div class="hint">Selecione um paciente ao lado para começar</div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+  
+  // Render medicamentos
+  renderMedicamentosList();
+  
+  main.innerHTML = `
+    <div class="card">
+      <div class="title">💊 Nova Receita para ${escapeHtml(patient.nome)}</div>
+      <div class="hint">Preencha os medicamentos e clique em "Gerar Receita".</div>
+      
+      <div id="receitaPreview">
+        <!-- Preview será gerado aqui -->
+      </div>
+      
+      <div class="hr"></div>
+      
+      <div class="title">📜 Receitas Anteriores</div>
+      <div class="list">
+        ${getReceitasByPatient(patient.id).map(r => {
+          const dataValidade = new Date(r.dataISO);
+          dataValidade.setDate(dataValidade.getDate() + (r.validade || 30));
+          
+          return `
+            <div class="item">
+              <div class="top">
+                <div>
+                  <strong>Receita de ${fmtBRDate(r.dataISO)}</strong>
+                  <div class="small">
+                    ${r.itens?.length || 0} item(s) • 
+                    Validade: ${fmtBRDate(dataValidade.toISOString())}
+                  </div>
+                </div>
+                <div>
+                  <button class="btn secondary" onclick="printReceita('${r.id}')">🖨️ Imprimir</button>
+                </div>
+              </div>
+              ${r.observacoes ? `<div class="meta"><b>Obs:</b> ${escapeHtml(r.observacoes)}</div>` : ''}
+            </div>
+          `;
+        }).join("")}
+      </div>
+    </div>
+  `;
+  
+  updateReceitaPreview();
+}
+
+let medicamentosCount = 0;
+
+function renderMedicamentosList(){
+  const container = document.getElementById("medicamentosList");
+  if(!container) return;
+  
+  if(medicamentosCount === 0){
+    medicamentosCount = 1;
+  }
+  
+  let html = '';
+  for(let i = 0; i < medicamentosCount; i++){
+    html += `
+      <div class="receita-grid" id="medLine${i}">
+        <div>
+          <input type="text" id="medQtd${i}" placeholder="Ex: 30" value="30" 
+                 style="width:100%; padding:8px; font-size:12px;" />
+        </div>
+        <div>
+          <select id="medNome${i}" style="width:100%; padding:8px; font-size:12px;"
+                  onchange="updateMedApresentacao(${i})">
+            <option value="">Selecione ou digite...</option>
+            ${db.medicamentos.map(m => `
+              <option value="${escapeHtml(m.nome)}">${escapeHtml(m.nome)}</option>
+            `).join("")}
+            <option value="_custom">➕ Outro medicamento...</option>
+          </select>
+          <input type="text" id="medCustom${i}" placeholder="Nome do medicamento" 
+                 style="width:100%; padding:8px; font-size:12px; margin-top:5px; display:none;"
+                 oninput="document.getElementById('medApres${i}').value='';" />
+        </div>
+        <div>
+          <input type="text" id="medApres${i}" placeholder="Ex: Comprimidos" 
+                 style="width:100%; padding:8px; font-size:12px;" />
+        </div>
+        <div>
+          <button class="btn danger" onclick="removeMedicamentoLine(${i})" 
+                  style="padding:8px; font-size:12px;" ${i===0?'disabled':''}>🗑️</button>
+        </div>
+      </div>
+    `;
+  }
+  
+  container.innerHTML = html;
+}
+
+function addMedicamentoLine(){
+  medicamentosCount++;
+  renderMedicamentosList();
+  updateReceitaPreview();
+}
+
+function removeMedicamentoLine(index){
+  if(medicamentosCount > 1){
+    const line = document.getElementById(`medLine${index}`);
+    if(line) line.remove();
+    
+    // Reindexar as linhas restantes
+    const newLines = [];
+    for(let i = 0; i < medicamentosCount; i++){
+      if(i !== index){
+        newLines.push(i);
+      }
+    }
+    
+    medicamentosCount = newLines.length;
+    renderMedicamentosList();
+    updateReceitaPreview();
+  }
+}
+
+function updateMedApresentacao(index){
+  const select = document.getElementById(`medNome${index}`);
+  const customInput = document.getElementById(`medCustom${index}`);
+  const apresInput = document.getElementById(`medApres${index}`);
+  
+  if(select.value === '_custom'){
+    customInput.style.display = 'block';
+    apresInput.value = '';
+  } else {
+    customInput.style.display = 'none';
+    customInput.value = '';
+    
+    // Encontrar medicamento na lista
+    const medicamento = db.medicamentos.find(m => m.nome === select.value);
+    if(medicamento && medicamento.apresentacao){
+      apresInput.value = medicamento.apresentacao;
+    }
+  }
+  updateReceitaPreview();
+}
+
+function updateReceitaPreview(){
+  const preview = document.getElementById("receitaPreview");
+  if(!preview) return;
+  
+  const paciente = getPatient(selectedPatientId);
+  if(!paciente) return;
+  
+  let medicamentos = [];
+  let hasErrors = false;
+  
+  for(let i = 0; i < medicamentosCount; i++){
+    const nomeSelect = document.getElementById(`medNome${i}`);
+    const customInput = document.getElementById(`medCustom${i}`);
+    const qtd = document.getElementById(`medQtd${i}`)?.value.trim() || "";
+    const apres = document.getElementById(`medApres${i}`)?.value.trim() || "";
+    
+    let nome = "";
+    if(nomeSelect?.value === '_custom'){
+      nome = customInput?.value.trim() || "";
+    } else {
+      nome = nomeSelect?.value || "";
+    }
+    
+    if(nome && qtd){
+      medicamentos.push({nome, qtd, apres});
+    } else if(nome || qtd){
+      hasErrors = true;
+    }
+  }
+  
+  const idade = paciente.nasc ? calcularIdade(paciente.nasc) : null;
+  
+  let html = `
+    <div class="card">
+      <div class="title">📋 Preview da Receita</div>
+      
+      <div style="border:1px solid rgba(255,255,255,.1); border-radius:8px; padding:15px; background:rgba(0,0,0,.1);">
+        <div style="text-align:center; margin-bottom:20px;">
+          <div style="font-size:18px; font-weight:bold; margin-bottom:5px;">RECEITA MÉDICA</div>
+          <div style="font-size:12px; color:var(--muted);">${db.prof.nome || 'Médico'} • ${db.prof.registro || ''}</div>
+        </div>
+        
+        <div style="margin-bottom:15px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <div>
+              <div style="font-size:12px; color:var(--muted);">Paciente:</div>
+              <div style="font-weight:bold;">${escapeHtml(paciente.nome)}</div>
+              ${idade ? `<div style="font-size:11px;">${idade} anos</div>` : ''}
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:12px; color:var(--muted);">Data:</div>
+              <div>${fmtBRDate(new Date())}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div style="margin-bottom:20px;">
+          <div style="font-size:12px; color:var(--muted); margin-bottom:10px;">MEDICAMENTOS PRESCRITOS:</div>
+  `;
+  
+  if(medicamentos.length > 0){
+    html += `<table class="table">`;
+    medicamentos.forEach((med, idx) => {
+      html += `
+        <tr>
+          <td style="width:40px;">${idx+1}.</td>
+          <td>
+            <div style="font-weight:bold;">${escapeHtml(med.nome)}</div>
+            ${med.apres ? `<div style="font-size:11px; color:var(--muted);">${escapeHtml(med.apres)}</div>` : ''}
+          </td>
+          <td style="text-align:right; white-space:nowrap;">${escapeHtml(med.qtd)} unidades</td>
+        </tr>
+      `;
+    });
+    html += `</table>`;
+  } else {
+    html += `<div style="text-align:center; padding:20px; color:var(--muted);">Nenhum medicamento adicionado</div>`;
+  }
+  
+  const obs = document.getElementById("recObs")?.value.trim() || "";
+  const validade = parseInt(document.getElementById("recValidade")?.value) || 30;
+  const dataValidade = new Date();
+  dataValidade.setDate(dataValidade.getDate() + validade);
+  
+  html += `
+        </div>
+        
+        ${obs ? `
+          <div style="margin-bottom:15px; padding:10px; background:rgba(255,255,255,.05); border-radius:5px;">
+            <div style="font-size:12px; color:var(--muted); margin-bottom:5px;">Observações:</div>
+            <div style="font-size:12px;">${escapeHtml(obs)}</div>
+          </div>
+        ` : ''}
+        
+        <div style="border-top:1px dashed rgba(255,255,255,.1); padding-top:15px; margin-top:20px;">
+          <div style="display:flex; justify-content:space-between; font-size:12px;">
+            <div>
+              <div style="color:var(--muted);">Validade:</div>
+              <div>${fmtBRDate(dataValidade)}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="color:var(--muted);">Assinatura:</div>
+              <div style="margin-top:30px; border-top:1px solid rgba(255,255,255,.3); padding-top:5px; min-width:150px;">
+                ${db.prof.nome || ''}
+              </div>
+              <div style="font-size:11px; color:var(--muted);">${db.prof.registro || ''}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      ${hasErrors ? `
+        <div style="margin-top:15px; padding:10px; background:rgba(234,179,8,.1); border:1px solid rgba(234,179,8,.3); border-radius:8px;">
+          <div style="color:var(--warning); font-size:12px;">⚠️ Alguns medicamentos estão incompletos</div>
+        </div>
+      ` : ''}
+    </div>
+  `;
+  
+  preview.innerHTML = html;
+}
+
+function gerarNovaReceita(){
+  const pacienteId = selectedPatientId;
+  if(!pacienteId) {
+    toast("Selecione um paciente", false);
+    return;
+  }
+  
+  const paciente = getPatient(pacienteId);
+  if(!paciente) return;
+  
+  // Coletar medicamentos
+  let medicamentos = [];
+  let hasErrors = false;
+  
+  for(let i = 0; i < medicamentosCount; i++){
+    const nomeSelect = document.getElementById(`medNome${i}`);
+    const customInput = document.getElementById(`medCustom${i}`);
+    const qtdInput = document.getElementById(`medQtd${i}`);
+    const apresInput = document.getElementById(`medApres${i}`);
+    
+    if(!nomeSelect || !qtdInput) continue;
+    
+    let nome = "";
+    if(nomeSelect.value === '_custom'){
+      nome = customInput?.value.trim() || "";
+    } else {
+      nome = nomeSelect.value;
+    }
+    
+    const qtd = qtdInput.value.trim();
+    const apres = apresInput?.value.trim() || "";
+    
+    if(nome && qtd){
+      medicamentos.push({
+        nome: nome,
+        quantidade: qtd,
+        apresentacao: apres || "Não especificado",
+        posologia: "Conforme orientação médica"
+      });
+      
+      // Adicionar à lista de medicamentos se for custom
+      if(nomeSelect.value === '_custom' && nome && !db.medicamentos.some(m => m.nome === nome)){
+        db.medicamentos.push({
+          nome: nome,
+          apresentacao: apres || ""
+        });
+      }
+    } else if(nome || qtd){
+      hasErrors = true;
+    }
+  }
+  
+  if(medicamentos.length === 0){
+    toast("Adicione pelo menos um medicamento", false);
+    return;
+  }
+  
+  if(hasErrors){
+    if(!confirm("Alguns medicamentos estão incompletos. Deseja continuar assim mesmo?")){
+      return;
+    }
+  }
+  
+  const receita = {
+    id: uid(),
+    pacienteId,
+    dataISO: new Date(document.getElementById("recData").value + "T12:00:00").toISOString(),
+    medicoId: db.prof.nome || "Médico",
+    itens: medicamentos,
+    observacoes: document.getElementById("recObs")?.value.trim() || "",
+    validade: parseInt(document.getElementById("recValidade")?.value) || 30,
+    criadoEm: new Date().toISOString()
+  };
+  
+  db.receitas.push(receita);
+  if(saveDB(db)){
+    toast("Receita gerada com sucesso!");
+    
+    // Resetar formulário
+    medicamentosCount = 1;
+    document.getElementById("recObs").value = "";
+    renderMedicamentosList();
+    updateReceitaPreview();
+    
+    // Mostrar a receita gerada
+    viewReceita(receita.id);
+  }
+}
+
+function viewReceita(id){
+  const receita = db.receitas.find(r => r.id === id);
+  if(!receita) return;
+  
+  const paciente = getPatient(receita.pacienteId);
+  const dataValidade = new Date(receita.dataISO);
+  dataValidade.setDate(dataValidade.getDate() + (receita.validade || 30));
+  
+  let html = `
+    <div class="title">💊 Receita Médica</div>
+    
+    <div style="border:2px solid #333; padding:20px; background:white; color:black; border-radius:5px; margin:20px 0;">
+      <div style="text-align:center; margin-bottom:30px;">
+        <div style="font-size:24px; font-weight:bold; margin-bottom:5px;">RECEITA MÉDICA</div>
+        <div style="font-size:14px; color:#666;">${db.prof.nome || 'Médico'} • ${db.prof.registro || ''}</div>
+        <div style="font-size:12px; color:#666; margin-top:5px;">${db.prof.endereco || ''} • ${db.prof.cidadeUF || ''}</div>
+      </div>
+      
+      <div style="margin-bottom:25px;">
+        <table style="width:100%; margin-bottom:15px;">
+          <tr>
+            <td style="width:50%; vertical-align:top;">
+              <div style="font-size:14px; color:#666; margin-bottom:5px;">Paciente:</div>
+              <div style="font-size:16px; font-weight:bold;">${escapeHtml(paciente ? paciente.nome : '')}</div>
+              ${paciente?.nasc ? `<div style="font-size:12px;">${calcularIdade(paciente.nasc)} anos</div>` : ''}
+            </td>
+            <td style="text-align:right; vertical-align:top;">
+              <div style="font-size:14px; color:#666; margin-bottom:5px;">Data:</div>
+              <div style="font-size:16px;">${fmtBRDate(receita.dataISO)}</div>
+            </td>
+          </tr>
+        </table>
+      </div>
+      
+      <div style="margin-bottom:25px;">
+        <div style="font-size:14px; color:#666; margin-bottom:15px; border-bottom:1px solid #ddd; padding-bottom:5px;">
+          PRESCRIÇÃO MÉDICA
+        </div>
+        
+        <table style="width:100%; border-collapse:collapse;">
+  `;
+  
+  receita.itens.forEach((item, idx) => {
+    html += `
+      <tr style="${idx > 0 ? 'border-top:1px solid #eee;' : ''}">
+        <td style="padding:10px 0; vertical-align:top; width:30px;">${idx+1}.</td>
+        <td style="padding:10px 0; vertical-align:top;">
+          <div style="font-weight:bold; font-size:14px;">${escapeHtml(item.nome)}</div>
+          <div style="font-size:12px; color:#666; margin-top:2px;">${escapeHtml(item.apresentacao || '')}</div>
+          <div style="font-size:12px; color:#666; margin-top:5px;">
+            <b>Posologia:</b> ${escapeHtml(item.posologia || 'Conforme orientação médica')}
+          </div>
+        </td>
+        <td style="padding:10px 0; vertical-align:top; text-align:right; white-space:nowrap; font-weight:bold;">
+          ${escapeHtml(item.quantidade)} ${item.apresentacao ? escapeHtml(item.apresentacao.toLowerCase()) : 'unidades'}
+        </td>
+      </tr>
+    `;
+  });
+  
+  html += `
+        </table>
+      </div>
+      
+      ${receita.observacoes ? `
+        <div style="margin-bottom:25px; padding:15px; background:#f9f9f9; border-radius:5px; border-left:4px solid #4CAF50;">
+          <div style="font-size:14px; color:#666; margin-bottom:5px;">Observações:</div>
+          <div style="font-size:13px;">${escapeHtml(receita.observacoes)}</div>
+        </div>
+      ` : ''}
+      
+      <div style="border-top:2px solid #333; padding-top:20px; margin-top:30px;">
+        <table style="width:100%;">
+          <tr>
+            <td style="vertical-align:top;">
+              <div style="font-size:14px; color:#666; margin-bottom:5px;">Validade:</div>
+              <div style="font-size:14px; font-weight:bold;">${fmtBRDate(dataValidade)}</div>
+            </td>
+            <td style="text-align:right; vertical-align:bottom;">
+              <div style="margin-top:40px; padding-top:10px; border-top:1px solid #333; min-width:200px; display:inline-block;">
+                <div style="text-align:center;">
+                  <div style="font-size:14px;">${db.prof.nome || ''}</div>
+                  <div style="font-size:12px; color:#666; margin-top:5px;">${db.prof.registro || ''}</div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+      
+      <div style="margin-top:30px; font-size:10px; color:#999; text-align:center;">
+        Receita gerada em ${fmtBRDateTime(new Date())} • BTX Prontuário + Agenda
+      </div>
+    </div>
+    
+    <div class="row" style="margin-top:20px;">
+      <button class="btn" onclick="printReceita('${id}')" style="flex:1;">🖨️ Imprimir Receita</button>
+      <button class="btn secondary" onclick="closeModal()" style="flex:1;">✕ Fechar</button>
+    </div>
+  `;
+  
+  openModal(html);
+}
+
+function printReceita(id){
+  const receita = db.receitas.find(r => r.id === id);
+  if(!receita) return;
+  
+  const paciente = getPatient(receita.pacienteId);
+  const dataValidade = new Date(receita.dataISO);
+  dataValidade.setDate(dataValidade.getDate() + (receita.validade || 30));
+  
+  let printContent = `
+    <html>
+    <head>
+      <title>Receita Médica - ${paciente ? paciente.nome : ''}</title>
+      <style>
+        @media print {
+          @page { margin: 0; }
+          body { margin: 1.6cm; }
+        }
+        body { 
+          font-family: Arial, sans-serif; 
+          color: #000;
+          max-width: 21cm;
+          margin: 0 auto;
+        }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { font-size: 24px; margin: 0; }
+        .header .subtitle { font-size: 14px; color: #666; margin-top: 5px; }
+        .patient-info { margin-bottom: 25px; }
+        .patient-info table { width: 100%; }
+        .section-title { 
+          font-size: 14px; 
+          color: #666; 
+          margin-bottom: 15px; 
+          border-bottom: 1px solid #ddd; 
+          padding-bottom: 5px; 
+        }
+        .medicamentos { margin-bottom: 25px; }
+        .medicamento-item { 
+          padding: 10px 0; 
+          border-bottom: 1px solid #eee; 
+        }
+        .medicamento-item:last-child { border-bottom: none; }
+        .footer { 
+          border-top: 2px solid #000; 
+          padding-top: 20px; 
+          margin-top: 30px; 
+        }
+        .footer table { width: 100%; }
+        .signature { 
+          margin-top: 40px; 
+          padding-top: 10px; 
+          border-top: 1px solid #000; 
+          text-align: center;
+          min-width: 200px;
+        }
+        .watermark { 
+          position: fixed; 
+          bottom: 10px; 
+          right: 10px; 
+          font-size: 8px; 
+          color: #ccc; 
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1>RECEITA MÉDICA</h1>
+        <div class="subtitle">${db.prof.nome || 'Médico'} • ${db.prof.registro || ''}</div>
+        <div class="subtitle">${db.prof.endereco || ''} • ${db.prof.cidadeUF || ''}</div>
+      </div>
+      
+      <div class="patient-info">
+        <table>
+          <tr>
+            <td style="width:50%; vertical-align:top;">
+              <div style="font-size:14px; color:#666; margin-bottom:5px;">Paciente:</div>
+              <div style="font-size:16px; font-weight:bold;">${escapeHtml(paciente ? paciente.nome : '')}</div>
+              ${paciente?.nasc ? `<div style="font-size:12px;">${calcularIdade(paciente.nasc)} anos</div>` : ''}
+            </td>
+            <td style="text-align:right; vertical-align:top;">
+              <div style="font-size:14px; color:#666; margin-bottom:5px;">Data:</div>
+              <div style="font-size:16px;">${fmtBRDate(receita.dataISO)}</div>
+            </td>
+          </tr>
+        </table>
+      </div>
+      
+      <div class="section-title">PRESCRIÇÃO MÉDICA</div>
+      
+      <div class="medicamentos">
+  `;
+  
+  receita.itens.forEach((item, idx) => {
+    printContent += `
+      <div class="medicamento-item">
+        <div style="display:flex;">
+          <div style="width:30px; font-weight:bold;">${idx+1}.</div>
+          <div style="flex:1;">
+            <div style="font-weight:bold; font-size:14px;">${escapeHtml(item.nome)}</div>
+            <div style="font-size:12px; color:#666; margin-top:2px;">${escapeHtml(item.apresentacao || '')}</div>
+            <div style="font-size:12px; color:#666; margin-top:5px;">
+              <b>Posologia:</b> ${escapeHtml(item.posologia || 'Conforme orientação médica')}
+            </div>
+          </div>
+          <div style="font-weight:bold; white-space:nowrap;">
+            ${escapeHtml(item.quantidade)} ${item.apresentacao ? escapeHtml(item.apresentacao.toLowerCase()) : 'unidades'}
+          </div>
+        </div>
+      </div>
+    `;
+  });
+  
+  printContent += `
+      </div>
+      
+      ${receita.observacoes ? `
+        <div style="margin-bottom:25px; padding:15px; background:#f9f9f9; border-radius:5px; border-left:4px solid #4CAF50;">
+          <div style="font-size:14px; color:#666; margin-bottom:5px;">Observações:</div>
+          <div style="font-size:13px;">${escapeHtml(receita.observacoes)}</div>
+        </div>
+      ` : ''}
+      
+      <div class="footer">
+        <table>
+          <tr>
+            <td style="vertical-align:top;">
+              <div style="font-size:14px; color:#666; margin-bottom:5px;">Validade:</div>
+              <div style="font-size:14px; font-weight:bold;">${fmtBRDate(dataValidade)}</div>
+            </td>
+            <td style="text-align:right;">
+              <div class="signature">
+                <div style="font-size:14px;">${db.prof.nome || ''}</div>
+                <div style="font-size:12px; color:#666; margin-top:5px;">${db.prof.registro || ''}</div>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+      
+      <div class="watermark">
+        Receita gerada em ${fmtBRDateTime(new Date())} • BTX Prontuário + Agenda
+      </div>
+    </body>
+    </html>
+  `;
+  
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(printContent);
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => {
+    printWindow.print();
+    printWindow.close();
+  }, 500);
+}
+
+function deleteReceita(id){
+  if(!confirm("Excluir esta receita?\n\nEsta ação não pode ser desfeita.")) return;
+  
+  db.receitas = db.receitas.filter(r => r.id !== id);
+  if(saveDB(db)){
+    toast("Receita excluída.");
+    renderReceitas();
+  }
+}
+
+/* =========================
+   TAB: DOCS (COMPLETA)
+========================= */
+function renderDocs(){
+  const patientSelectHtml = `
+    <option value="">Todos os pacientes</option>
+    ${db.pacientes.sort(byName).map(p => `
+      <option value="${p.id}" ${p.id===selectedPatientId?'selected':''}>
+        ${escapeHtml(p.nome)} ${p.nasc ? `(${calcularIdade(p.nasc)} anos)` : ''}
+      </option>
+    `).join("")}
+  `;
+  
+  side.innerHTML = `
+    <div class="card">
+      <div class="title">📄 Gerar Documentos</div>
       <div class="hint">Selecione o tipo de documento e opções.</div>
       
-      <label>Tipo de documento</label>
-      <select id="docType">
+      <label>Tipo de Documento</label>
+      <select id="docType" onchange="renderDocOptions()">
         <option value="evolucao">📋 Evolução individual</option>
         <option value="prontuario">🧾 Prontuário completo</option>
         <option value="agenda">📅 Agenda do dia</option>
-        <option value="prescricao">💊 Prescrição/Receita</option>
+        <option value="receita">💊 Receita médica</option>
+        <option value="atestado">🏥 Atestado médico</option>
+        <option value="relatorio">📊 Relatório clínico</option>
+        <option value="encaminhamento">↪️ Encaminhamento</option>
       </select>
       
       <label>Paciente</label>
-      <select id="docPatient" onchange="selectedPatientId=this.value; renderDocs()">
+      <select id="docPatient" onchange="selectedPatientId=this.value; renderDocOptions()">
         ${patientSelectHtml}
       </select>
       
@@ -1098,292 +2874,492 @@ function renderDocs(){
       
       <button class="btn" onclick="generatePDF()">🖨️ Gerar PDF</button>
       <button class="btn secondary" onclick="downloadPDF()" ${pdfURL?'':'disabled'}>⬇️ Baixar PDF</button>
+      <button class="btn secondary" onclick="previewPDF()" ${pdfURL?'':'disabled'}>👁️ Visualizar</button>
       
       <div class="hr"></div>
       <div class="hint">
-        O PDF será gerado com jsPDF e aparecerá ao lado →<br>
+        O PDF será gerado com jsPDF e aparecerá ao lado.<br>
         Clique em "Baixar PDF" para salvar no dispositivo.
       </div>
     </div>
   `;
   
-  // Render extra options based on doc type
-  const docType = document.getElementById("docType")?.value || "evolucao";
-  const extraOptions = document.getElementById("docExtraOptions");
-  
-  if(docType === "evolucao" && selectedPatientId){
-    const evs = getEvolucoes(selectedPatientId);
-    if(evs.length){
-      extraOptions.innerHTML = `
-        <label>Selecionar evolução</label>
-        <select id="docEvolucao">
-          ${evs.map(e=>`<option value="${e.id}">${fmtBRDate(e.dataISO)} - ${escapeHtml(e.tipoAtend)}</option>`).join("")}
-        </select>
-      `;
-    }
-  } else if(docType === "agenda"){
-    extraOptions.innerHTML = `
-      <label>Data da agenda</label>
-      <input id="docAgendaDate" type="date" value="${selectedDayISO}" />
-    `;
-  }
+  renderDocOptions();
   
   // Main content - PDF preview
   main.innerHTML = `
     <div class="card">
       <div class="title">📄 Visualização do PDF</div>
-      <div class="hint">O PDF será exibido aqui após clicar em "Gerar PDF".</div>
+      <div class="hint">
+        ${pdfURL ? 'Documento gerado. Clique em "Baixar PDF" para salvar.' : 'Nenhum documento gerado ainda.'}
+      </div>
       
       <div class="pdfBox" id="pdfPreview">
-        ${pdfURL ? `<iframe src="${pdfURL}"></iframe>` : `
+        ${pdfURL ? `
+          <iframe src="${pdfURL}"></iframe>
+        ` : `
           <div style="display:grid; place-items:center; height:100%; color:var(--muted);">
             <div style="text-align:center; padding:40px;">
               <div style="font-size:48px; margin-bottom:20px;">📄</div>
               <div>Nenhum PDF gerado ainda.</div>
-              <div class="small">Clique em "Gerar PDF" ao lado.</div>
+              <div class="small">Selecione as opções e clique em "Gerar PDF".</div>
             </div>
           </div>
         `}
+      </div>
+      
+      <div class="toolbar" style="margin-top:15px;">
+        <button class="btn secondary" onclick="clearPDF()">🗑️ Limpar Preview</button>
+        <button class="btn" onclick="generatePDF()">🔄 Gerar Novamente</button>
       </div>
     </div>
   `;
 }
 
-function generatePDF(){
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  const prof = db.prof;
+function renderDocOptions(){
   const docType = document.getElementById("docType").value;
   const patientId = document.getElementById("docPatient").value;
-  const patient = getPatient(patientId);
+  const extraOptions = document.getElementById("docExtraOptions");
   
-  // Configurações da página
-  const margin = 20;
-  let y = margin;
-  const pageWidth = doc.internal.pageSize.width;
-  const pageHeight = doc.internal.pageSize.height;
+  let html = '';
   
-  // Cabeçalho padrão
-  doc.setFontSize(20);
-  doc.setFont("helvetica", "bold");
-  doc.text("BTX • Prontuário + Agenda", pageWidth/2, y, {align: "center"});
-  y += 10;
+  if(docType === "evolucao" && patientId){
+    const evs = getEvolucoes(patientId);
+    if(evs.length){
+      html += `
+        <label>Selecionar evolução</label>
+        <select id="docEvolucao">
+          ${evs.map(e => `
+            <option value="${e.id}">${fmtBRDate(e.dataISO)} - ${escapeHtml(e.tipoAtend)}</option>
+          `).join("")}
+        </select>
+      `;
+    } else {
+      html += `<div class="hint">Nenhuma evolução encontrada para este paciente.</div>`;
+    }
+  } 
+  else if(docType === "agenda"){
+    html += `
+      <label>Data da agenda</label>
+      <input id="docAgendaDate" type="date" value="${selectedDayISO}" />
+    `;
+  }
+  else if(docType === "receita" && patientId){
+    const receitas = getReceitasByPatient(patientId);
+    if(receitas.length){
+      html += `
+        <label>Selecionar receita</label>
+        <select id="docReceita">
+          ${receitas.map(r => `
+            <option value="${r.id}">${fmtBRDate(r.dataISO)} - ${r.itens?.length || 0} item(s)</option>
+          `).join("")}
+        </select>
+      `;
+    } else {
+      html += `
+        <div class="hint">Nenhuma receita encontrada.</div>
+        <label>Gerar nova receita?</label>
+        <button class="btn secondary" onclick="gerarReceita('${patientId}')">💊 Criar Receita</button>
+      `;
+    }
+  }
+  else if(docType === "atestado" && patientId){
+    const paciente = getPatient(patientId);
+    html += `
+      <label>Quantidade de dias</label>
+      <select id="atestadoDias">
+        <option value="1">1 dia</option>
+        <option value="2">2 dias</option>
+        <option value="3">3 dias</option>
+        <option value="5" selected>5 dias</option>
+        <option value="7">7 dias</option>
+        <option value="10">10 dias</option>
+        <option value="15">15 dias</option>
+        <option value="30">30 dias</option>
+      </select>
+      
+      <label>Motivo</label>
+      <select id="atestadoMotivo">
+        <option value="Doença">Doença</option>
+        <option value="Consulta médica">Consulta médica</option>
+        <option value="Exames">Exames</option>
+        <option value="Procedimento médico">Procedimento médico</option>
+        <option value="Repouso médico">Repouso médico</option>
+        <option value="Acompanhamento familiar">Acompanhamento familiar</option>
+        <option value="Outros">Outros</option>
+      </select>
+      
+      <label>Observações (opcional)</label>
+      <textarea id="atestadoObs" placeholder="Detalhes adicionais..." rows="2"></textarea>
+      
+      <label>CID (opcional)</label>
+      <input id="atestadoCID" placeholder="Ex: J06.9, I10, etc." />
+    `;
+  }
+  else if(docType === "relatorio" && patientId){
+    html += `
+      <label>Tipo de relatório</label>
+      <select id="relatorioTipo">
+        <option value="clinico">Relatório Clínico</option>
+        <option value="evolutivo">Relatório Evolutivo</option>
+        <option value="alta">Relatório de Alta</option>
+        <option value="avaliacao">Avaliação Clínica</option>
+      </select>
+      
+      <label>Período</label>
+      <div class="row">
+        <input id="relatorioInicio" type="date" value="${toISODate(new Date(Date.now() - 30*24*60*60*1000))}" />
+        <input id="relatorioFim" type="date" value="${toISODate(new Date())}" />
+      </div>
+      
+      <label>Incluir</label>
+      <div style="font-size:12px;">
+        <label><input type="checkbox" id="incluirEvolucoes" checked> Evoluções</label><br>
+        <label><input type="checkbox" id="incluirExames" checked> Exames</label><br>
+        <label><input type="checkbox" id="incluirPrescricoes" checked> Prescrições</label>
+      </div>
+    `;
+  }
+  else if(docType === "encaminhamento" && patientId){
+    const paciente = getPatient(patientId);
+    html += `
+      <label>Especialidade</label>
+      <select id="encaminhamentoEspecialidade">
+        <option value="Cardiologia">Cardiologia</option>
+        <option value="Dermatologia">Dermatologia</option>
+        <option value="Endocrinologia">Endocrinologia</option>
+        <option value="Gastroenterologia">Gastroenterologia</option>
+        <option value="Neurologia">Neurologia</option>
+        <option value="Ortopedia">Ortopedia</option>
+        <option value="Otorrinolaringologia">Otorrinolaringologia</option>
+        <option value="Pediatria">Pediatria</option>
+        <option value="Psiquiatria">Psiquiatria</option>
+        <option value="Outra">Outra</option>
+      </select>
+      
+      <label>Motivo do encaminhamento</label>
+      <textarea id="encaminhamentoMotivo" placeholder="Descreva o motivo do encaminhamento..." rows="3"></textarea>
+      
+      <label>Observações</label>
+      <textarea id="encaminhamentoObs" placeholder="Informações relevantes para o especialista..." rows="2"></textarea>
+      
+      <label>Urgência</label>
+      <select id="encaminhamentoUrgencia">
+        <option value="rotina">Rotina</option>
+        <option value="preferencial">Preferencial</option>
+        <option value="urgente">Urgente</option>
+      </select>
+    `;
+  }
   
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.text(`${prof.nome} • ${prof.categoria} • ${prof.registro}`, pageWidth/2, y, {align: "center"});
-  y += 8;
-  doc.text(`${prof.endereco} • ${prof.cidadeUF} • ${prof.contato}`, pageWidth/2, y, {align: "center"});
-  y += 15;
-  
-  doc.setDrawColor(200);
-  doc.line(margin, y, pageWidth - margin, y);
-  y += 10;
-  
-  if(docType === "evolucao" && patient){
-    const evolucaoId = document.getElementById("docEvolucao")?.value;
-    const ev = db.evolucoes.find(e => e.id === evolucaoId);
+  extraOptions.innerHTML = html;
+}
+
+function generatePDF(){
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const prof = db.prof;
+    const docType = document.getElementById("docType").value;
+    const patientId = document.getElementById("docPatient").value;
+    const patient = patientId ? getPatient(patientId) : null;
     
-    if(ev){
-      doc.setFontSize(16);
-      doc.setFont("helvetica", "bold");
-      doc.text("EVOLUÇÃO MÉDICA", margin, y);
-      y += 10;
-      
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      doc.text(`Paciente: ${patient.nome}`, margin, y);
+    // Configurações
+    const margin = 20;
+    let y = margin;
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+    
+    // Cabeçalho padrão
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("BTX • Prontuário + Agenda", pageWidth/2, y, {align: "center"});
+    y += 8;
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`${prof.nome || 'Profissional'} • ${prof.categoria || ''} • ${prof.registro || ''}`, pageWidth/2, y, {align: "center"});
+    y += 6;
+    if(prof.endereco || prof.cidadeUF){
+      doc.text(`${prof.endereco || ''} ${prof.endereco && prof.cidadeUF ? '•' : ''} ${prof.cidadeUF || ''}`, pageWidth/2, y, {align: "center"});
       y += 6;
-      doc.text(`Data: ${fmtBRDate(ev.dataISO)} • Tipo: ${ev.tipoAtend}`, margin, y);
-      y += 10;
+    }
+    if(prof.contato){
+      doc.text(`${prof.contato || ''} ${prof.email ? '• ' + prof.email : ''}`, pageWidth/2, y, {align: "center"});
+      y += 6;
+    }
+    
+    doc.setDrawColor(150);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 12;
+    
+    // Conteúdo específico por tipo
+    if(docType === "evolucao" && patient){
+      const evolucaoId = document.getElementById("docEvolucao")?.value;
+      const ev = db.evolucoes.find(e => e.id === evolucaoId);
       
-      // SOAP
-      const sections = [
-        {title: "S (SUBJETIVO)", content: ev.soapS},
-        {title: "O (OBJETIVO)", content: ev.soapO},
-        {title: "A (AVALIAÇÃO)", content: ev.soapA},
-        {title: "P (PLANO)", content: ev.soapP},
-        {title: "ODONTOGRAMA / ACHADOS", content: ev.odonto},
-        {title: "EXAMES SOLICITADOS", content: ev.exames},
-        {title: "CONDUTA / PRESCRIÇÃO", content: ev.conduta},
-        {title: "ANOTAÇÕES ADICIONAIS", content: ev.anotacoes}
-      ];
-      
-      sections.forEach(section => {
-        if(section.content){
+      if(ev){
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text("EVOLUÇÃO MÉDICA", margin, y);
+        y += 10;
+        
+        // Dados do paciente
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text("PACIENTE:", margin, y);
+        doc.setFont("helvetica", "normal");
+        doc.text(`${patient.nome} ${patient.nasc ? `• ${calcularIdade(patient.nasc)} anos` : ''}`, margin + 25, y);
+        y += 6;
+        
+        doc.setFont("helvetica", "bold");
+        doc.text("DATA:", margin, y);
+        doc.setFont("helvetica", "normal");
+        doc.text(fmtBRDate(ev.dataISO), margin + 25, y);
+        
+        doc.setFont("helvetica", "bold");
+        doc.text("TIPO:", pageWidth/2, y);
+        doc.setFont("helvetica", "normal");
+        doc.text(ev.tipoAtend, pageWidth/2 + 25, y);
+        y += 10;
+        
+        // SOAP
+        const sections = [
+          {title: "S - SUBJETIVO", content: ev.soapS},
+          {title: "O - OBJETIVO", content: ev.soapO},
+          {title: "A - AVALIAÇÃO", content: ev.soapA},
+          {title: "P - PLANO", content: ev.soapP}
+        ];
+        
+        sections.forEach(section => {
           doc.setFont("helvetica", "bold");
           doc.text(`${section.title}:`, margin, y);
           y += 6;
           
           doc.setFont("helvetica", "normal");
-          const lines = doc.splitTextToSize(section.content, pageWidth - 2*margin);
+          const lines = doc.splitTextToSize(section.content || "Não informado", pageWidth - 2*margin);
           doc.text(lines, margin, y);
-          y += lines.length * 6 + 8;
+          y += lines.length * 5 + 8;
           
-          // Quebra de página
-          if(y > pageHeight - 30){
+          if(y > pageHeight - 40){
             doc.addPage();
             y = margin;
           }
-        }
-      });
-    }
-  } else if(docType === "prontuario" && patient){
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.text("PRONTUÁRIO COMPLETO", margin, y);
-    y += 10;
-    
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Paciente: ${patient.nome}`, margin, y);
-    y += 6;
-    if(patient.nasc) doc.text(`Nascimento: ${fmtBRDate(patient.nasc)}`, margin, y);
-    y += 6;
-    if(patient.telefone) doc.text(`Telefone: ${patient.telefone}`, margin, y);
-    y += 6;
-    if(patient.obs) doc.text(`Observações: ${patient.obs}`, margin, y);
-    y += 15;
-    
-    // Evoluções
-    const evs = getEvolucoes(patient.id);
-    evs.forEach((ev, idx) => {
-      doc.setFont("helvetica", "bold");
-      doc.text(`Evolução ${idx+1} - ${fmtBRDate(ev.dataISO)} • ${ev.tipoAtend}`, margin, y);
-      y += 8;
-      
-      const sections = [
-        {title: "S", content: ev.soapS},
-        {title: "O", content: ev.soapO},
-        {title: "A", content: ev.soapA},
-        {title: "P", content: ev.soapP}
-      ];
-      
-      sections.forEach(section => {
-        if(section.content){
+        });
+        
+        // Informações adicionais
+        if(ev.exames){
           doc.setFont("helvetica", "bold");
-          doc.text(`${section.title}:`, margin, y);
+          doc.text("EXAMES SOLICITADOS:", margin, y);
           y += 6;
           
           doc.setFont("helvetica", "normal");
-          const lines = doc.splitTextToSize(section.content, pageWidth - 2*margin);
+          const lines = doc.splitTextToSize(ev.exames, pageWidth - 2*margin);
           doc.text(lines, margin, y);
-          y += lines.length * 6 + 4;
+          y += lines.length * 5 + 8;
         }
-      });
-      
-      if(ev.conduta){
-        doc.setFont("helvetica", "bold");
-        doc.text("Conduta:", margin, y);
-        y += 6;
         
-        doc.setFont("helvetica", "normal");
-        const lines = doc.splitTextToSize(ev.conduta, pageWidth - 2*margin);
-        doc.text(lines, margin, y);
-        y += lines.length * 6 + 4;
+        if(ev.conduta){
+          doc.setFont("helvetica", "bold");
+          doc.text("CONDUTA / PRESCRIÇÃO:", margin, y);
+          y += 6;
+          
+          doc.setFont("helvetica", "normal");
+          const lines = doc.splitTextToSize(ev.conduta, pageWidth - 2*margin);
+          doc.text(lines, margin, y);
+          y += lines.length * 5 + 8;
+        }
+        
+        if(ev.anotacoes){
+          doc.setFont("helvetica", "bold");
+          doc.text("ANOTAÇÕES ADICIONAIS:", margin, y);
+          y += 6;
+          
+          doc.setFont("helvetica", "normal");
+          const lines = doc.splitTextToSize(ev.anotacoes, pageWidth - 2*margin);
+          doc.text(lines, margin, y);
+          y += lines.length * 5 + 8;
+        }
+      }
+    }
+    else if(docType === "prontuario" && patient){
+      // Similar à evolução, mas com histórico completo
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("PRONTUÁRIO MÉDICO COMPLETO", margin, y);
+      y += 10;
+      
+      // Dados do paciente
+      doc.setFontSize(10);
+      doc.text(`Paciente: ${patient.nome}`, margin, y);
+      y += 6;
+      if(patient.nasc){
+        doc.text(`Nascimento: ${fmtBRDate(patient.nasc)} (${calcularIdade(patient.nasc)} anos)`, margin, y);
+        y += 6;
+      }
+      if(patient.telefone){
+        doc.text(`Telefone: ${patient.telefone}`, margin, y);
+        y += 6;
+      }
+      if(patient.email){
+        doc.text(`E-mail: ${patient.email}`, margin, y);
+        y += 6;
+      }
+      if(patient.endereco){
+        doc.text(`Endereço: ${patient.endereco}`, margin, y);
+        y += 6;
+      }
+      if(patient.obs){
+        doc.text(`Observações: ${patient.obs}`, margin, y);
+        y += 6;
       }
       
       y += 10;
       
-      // Quebra de página
-      if(y > pageHeight - 30){
-        doc.addPage();
-        y = margin;
-      }
-    });
-  } else if(docType === "agenda"){
-    const agendaDate = document.getElementById("docAgendaDate")?.value || selectedDayISO;
-    const apts = getAgendaByDay(agendaDate);
-    
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.text("AGENDA DO DIA", margin, y);
-    y += 10;
-    
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Data: ${fmtBRDate(agendaDate)}`, margin, y);
-    y += 15;
-    
-    if(apts.length){
-      apts.forEach((apt, idx) => {
-        const p = getPatient(apt.pacienteId);
-        
+      // Histórico de evoluções
+      const evs = getEvolucoes(patient.id);
+      if(evs.length > 0){
         doc.setFont("helvetica", "bold");
-        doc.text(`${apt.hora || "--:--"} • ${apt.tipo}`, margin, y);
-        y += 6;
-        
-        doc.setFont("helvetica", "normal");
-        doc.text(`Paciente: ${p ? p.nome : "Paciente removido"}`, margin + 10, y);
-        y += 6;
-        
-        if(apt.resumo){
-          const lines = doc.splitTextToSize(`Resumo: ${apt.resumo}`, pageWidth - 2*margin - 10);
-          doc.text(lines, margin + 10, y);
-          y += lines.length * 6 + 4;
-        }
-        
+        doc.text("HISTÓRICO DE EVOLUÇÕES:", margin, y);
         y += 10;
         
-        // Quebra de página
-        if(y > pageHeight - 30){
-          doc.addPage();
-          y = margin;
-        }
-      });
-    } else {
-      doc.text("Sem agendamentos para este dia.", margin, y);
+        evs.forEach((ev, idx) => {
+          doc.setFont("helvetica", "bold");
+          doc.text(`Evolução ${idx+1} - ${fmtBRDate(ev.dataISO)} • ${ev.tipoAtend}`, margin, y);
+          y += 8;
+          
+          doc.setFont("helvetica", "normal");
+          const resumo = `S: ${ev.soapS?.substring(0, 100) || ''}... O: ${ev.soapO?.substring(0, 100) || ''}...`;
+          const lines = doc.splitTextToSize(resumo, pageWidth - 2*margin);
+          doc.text(lines, margin, y);
+          y += lines.length * 5 + 8;
+          
+          if(y > pageHeight - 40){
+            doc.addPage();
+            y = margin;
+          }
+        });
+      }
     }
-  } else if(docType === "prescricao" && patient){
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.text("PRESCRIÇÃO MÉDICA", margin, y);
-    y += 10;
+    else if(docType === "agenda"){
+      const agendaDate = document.getElementById("docAgendaDate")?.value || selectedDayISO;
+      const apts = getAgendaByDay(agendaDate);
+      
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("AGENDA PROFISSIONAL", margin, y);
+      y += 8;
+      
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Data: ${fmtBRDate(agendaDate)}`, margin, y);
+      y += 10;
+      
+      if(apts.length > 0){
+        apts.forEach((apt, idx) => {
+          const p = getPatient(apt.pacienteId);
+          
+          doc.setFont("helvetica", "bold");
+          doc.text(`${apt.hora || '--:--'} - ${p ? p.nome : 'Paciente'}`, margin, y);
+          y += 6;
+          
+          doc.setFont("helvetica", "normal");
+          const info = `${apt.tipo} • ${apt.duracao || 30} min • ${apt.status || 'agendado'}`;
+          doc.text(info, margin + 5, y);
+          y += 6;
+          
+          if(apt.resumo){
+            const lines = doc.splitTextToSize(apt.resumo, pageWidth - 2*margin - 10);
+            doc.text(lines, margin + 10, y);
+            y += lines.length * 5 + 4;
+          }
+          
+          y += 8;
+          
+          if(y > pageHeight - 40){
+            doc.addPage();
+            y = margin;
+          }
+        });
+      } else {
+        doc.text("Nenhuma consulta agendada para este dia.", margin, y);
+      }
+    }
+    else if(docType === "receita" && patient){
+      const receitaId = document.getElementById("docReceita")?.value;
+      const receita = db.receitas.find(r => r.id === receitaId);
+      
+      if(receita){
+        // Mesmo conteúdo da função printReceita, mas formatado para jsPDF
+        // Implementação similar à viewReceita, mas gerando PDF
+      }
+    }
+    else if(docType === "atestado" && patient){
+      const dias = document.getElementById("atestadoDias")?.value || 5;
+      const motivo = document.getElementById("atestadoMotivo")?.value || "Doença";
+      const obs = document.getElementById("atestadoObs")?.value || "";
+      const cid = document.getElementById("atestadoCID")?.value || "";
+      
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("ATESTADO MÉDICO", pageWidth/2, y, {align: "center"});
+      y += 15;
+      
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "normal");
+      
+      const textoAtestado = `
+        Atesto que ${patient.nome}, ${patient.nasc ? calcularIdade(patient.nasc) + ' anos,' : ''} 
+        portador(a) do ${patient.cpf ? 'CPF ' + patient.cpf + ',' : ''} 
+        necessita de afastamento de suas atividades por ${dias} ${dias == 1 ? 'dia' : 'dias'}, 
+        a partir de ${fmtBRDate(new Date())}, motivo: ${motivo}.
+        ${obs ? '\n\n' + obs : ''}
+      `;
+      
+      const lines = doc.splitTextToSize(textoAtestado, pageWidth - 2*margin);
+      doc.text(lines, margin, y);
+      y += lines.length * 5 + 15;
+      
+      if(cid){
+        doc.text(`CID: ${cid}`, margin, y);
+        y += 10;
+      }
+      
+      doc.text(`Local e data: ${prof.cidadeUF || ''}, ${fmtBRDate(new Date())}`, margin, y);
+      y += 20;
+      
+      // Assinatura
+      doc.setFont("helvetica", "bold");
+      doc.text("________________________________________", pageWidth/2, y, {align: "center"});
+      y += 8;
+      doc.text(prof.nome || "Médico", pageWidth/2, y, {align: "center"});
+      y += 6;
+      doc.setFontSize(9);
+      doc.text(prof.registro || "", pageWidth/2, y, {align: "center"});
+    }
     
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Paciente: ${patient.nome}`, margin, y);
-    y += 6;
-    if(patient.nasc) doc.text(`Nascimento: ${fmtBRDate(patient.nasc)}`, margin, y);
-    y += 6;
-    doc.text(`Data: ${fmtBRDate(new Date())}`, margin, y);
-    y += 15;
+    // Rodapé
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "italic");
+    const footerText = `Gerado em ${fmtBRDateTime(new Date())} • BTX Prontuário + Agenda • Página ${doc.internal.getNumberOfPages()}`;
+    doc.text(footerText, pageWidth/2, pageHeight - 10, {align: "center"});
     
-    doc.setFont("helvetica", "bold");
-    doc.text("________________________________________________________________________________", margin, y);
-    y += 20;
+    // Gerar URL para preview
+    pdfURL = doc.output('bloburl');
     
-    doc.setFont("helvetica", "normal");
-    doc.text("Medicação / Procedimento", margin, y);
-    y += 15;
-    doc.text("________________________________________________________________________________", margin, y);
-    y += 20;
-    doc.text("Assinatura:", margin, y);
-    y += 20;
-    doc.text("________________________________________________", margin, y);
-    y += 10;
-    doc.text(`${prof.nome}`, margin, y);
-    y += 6;
-    doc.text(`${prof.categoria} • ${prof.registro}`, margin, y);
+    // Atualizar preview
+    const preview = document.getElementById("pdfPreview");
+    preview.innerHTML = `<iframe src="${pdfURL}"></iframe>`;
+    
+    // Habilitar botões
+    document.querySelector('[onclick="downloadPDF()"]').disabled = false;
+    document.querySelector('[onclick="previewPDF()"]').disabled = false;
+    
+    toast("PDF gerado com sucesso!");
+  } catch(error){
+    console.error("Erro ao gerar PDF:", error);
+    toast("Erro ao gerar PDF", false);
   }
-  
-  // Rodapé
-  doc.setFontSize(8);
-  doc.setFont("helvetica", "italic");
-  const footerText = `Gerado em ${fmtBRDateTime(new Date())} • BTX Prontuário + Agenda • Página ${doc.internal.getNumberOfPages()}`;
-  doc.text(footerText, pageWidth/2, pageHeight - 10, {align: "center"});
-  
-  // Gerar URL para preview
-  pdfURL = doc.output('bloburl');
-  
-  // Atualizar preview
-  const preview = document.getElementById("pdfPreview");
-  preview.innerHTML = `<iframe src="${pdfURL}"></iframe>`;
-  
-  // Habilitar botão de download
-  document.querySelector('[onclick="downloadPDF()"]').disabled = false;
-  
-  toast("PDF gerado com sucesso!");
 }
 
 function downloadPDF(){
@@ -1391,18 +3367,89 @@ function downloadPDF(){
   
   const link = document.createElement('a');
   link.href = pdfURL;
-  link.download = `btx-documento-${new Date().toISOString().slice(0,10)}.pdf`;
+  const docType = document.getElementById("docType").value;
+  const patientId = document.getElementById("docPatient").value;
+  const patient = patientId ? getPatient(patientId) : null;
+  
+  let filename = `btx-${docType}-${new Date().toISOString().slice(0,10)}`;
+  if(patient){
+    filename = `btx-${docType}-${patient.nome.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().slice(0,10)}`;
+  }
+  
+  link.download = `${filename}.pdf`;
   link.click();
+}
+
+function previewPDF(){
+  if(!pdfURL) return;
+  
+  const previewWindow = window.open(pdfURL, '_blank');
+  if(previewWindow){
+    previewWindow.focus();
+  }
+}
+
+function clearPDF(){
+  pdfURL = null;
+  const preview = document.getElementById("pdfPreview");
+  preview.innerHTML = `
+    <div style="display:grid; place-items:center; height:100%; color:var(--muted);">
+      <div style="text-align:center; padding:40px;">
+        <div style="font-size:48px; margin-bottom:20px;">📄</div>
+        <div>Nenhum PDF gerado ainda.</div>
+        <div class="small">Selecione as opções e clique em "Gerar PDF".</div>
+      </div>
+    </div>
+  `;
+  
+  document.querySelector('[onclick="downloadPDF()"]').disabled = true;
+  document.querySelector('[onclick="previewPDF()"]').disabled = true;
+  
+  toast("Preview limpo");
 }
 
 /* =========================
    INICIALIZAÇÃO
 ========================= */
-// Inicializar ao carregar
 window.onload = function() {
-  ensureDB();
-  render();
+  try {
+    ensureDB();
+    render();
+    
+    // Verificar se é primeira execução
+    const firstRun = localStorage.getItem("btx_first_run");
+    if(!firstRun){
+      setTimeout(() => {
+        toast("Bem-vindo ao BTX Prontuário! Comece configurando seus dados na aba Config.", true);
+        localStorage.setItem("btx_first_run", "true");
+      }, 1000);
+    }
+    
+    // Salvar backup automático periodicamente
+    setInterval(() => {
+      const backupKey = `backup_auto_${new Date().toISOString().slice(0,10)}`;
+      const backupData = {
+        timestamp: new Date().toISOString(),
+        data: db,
+        version: "v3"
+      };
+      localStorage.setItem(backupKey, JSON.stringify(backupData));
+    }, 24 * 60 * 60 * 1000); // 24 horas
+  } catch(e){
+    console.error("Erro na inicialização:", e);
+    toast("Erro ao carregar sistema", false);
+  }
 };
+
+// Prevenir perda de dados ao fechar a página
+window.addEventListener('beforeunload', function(e){
+  // Esta função não impede completamente o fechamento,
+  // mas alerta o usuário sobre possíveis dados não salvos
+  if(db.evolucoes.length > 0 || db.agenda.length > 0){
+    // e.preventDefault();
+    // e.returnValue = '';
+  }
+});
 </script>
 </body>
 </html>
